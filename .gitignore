@@ -1,0 +1,59 @@
+# ===========================
+# Node / Backend (tickezy_backend)
+# ===========================
+tickezy_backend/node_modules/
+tickezy_backend/.env
+tickezy_backend/*.log
+tickezy_backend/npm-debug.log*
+tickezy_backend/yarn-debug.log*
+tickezy_backend/dist/
+tickezy_backend/build/
+tickezy_backend/uploads/
+tickezy_backend/package-lock.json
+tickezy_backend/yarn.lock
+
+# ===========================
+# iOS / Swift
+# ===========================
+# Xcode
+*.xcworkspace
+*.xcuserdatad
+*.xcuserdata/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/xcshareddata/
+
+# Build
+build/
+DerivedData/
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+Package.resolved
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Logs
+*.log
+
+# ===========================
+# OS / IDE
+# ===========================
+.DS_Store
+.vscode/
+.idea/
+
+# ===========================
+# Optional: swap / temp files
+# ===========================
+*~
+*.swp
