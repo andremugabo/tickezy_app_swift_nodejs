@@ -49,7 +49,7 @@ Node.js & Express backend for **Tickezy**, a mobile ticketing app that allows us
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/tickezy_backend.git
+git clone https://github.com/andremugabo/tickezy_app_swift_nodejs.git
 cd tickezy_backend
 ````
 
