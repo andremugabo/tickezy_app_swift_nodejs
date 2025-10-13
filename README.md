@@ -1,21 +1,20 @@
-# tickezy_app_swift_nodejs
-Here’s a professional and comprehensive **README.md** template for your Tickezy backend project:
+# Tickezy Fullstack
 
-````markdown
-# Tickezy Backend
-
-Node.js & Express backend for **Tickezy**, a mobile ticketing app that allows users to browse, purchase, and manage event tickets securely. The backend provides authentication, profile management, and admin features.
+**Tickezy** is a mobile ticketing platform that allows users to browse, purchase, and manage event tickets securely.  
+This repository contains both the **Node.js backend** and **Swift iOS frontend**.
 
 ---
 
 ## Table of Contents
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Environment Variables](#environment-variables)
+- [Frontend](#frontend)
+- [Backend Installation](#backend-installation)
+- [Backend Environment Variables](#backend-environment-variables)
 - [Database Setup](#database-setup)
-- [Running the App](#running-the-app)
+- [Running the Backend](#running-the-backend)
 - [API Documentation](#api-documentation)
+- [iOS Frontend Setup](#ios-frontend-setup)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -27,26 +26,39 @@ Node.js & Express backend for **Tickezy**, a mobile ticketing app that allows us
 - Password hashing with bcrypt
 - Role-based access control (Admin / Customer)
 - User profile management
+- Admin-only routes
+- Ticket browsing and purchase (via iOS frontend)
 - Swagger API documentation
 - PostgreSQL database integration via Sequelize ORM
 
 ---
 
 ## Tech Stack
-- Node.js
-- Express.js
-- PostgreSQL
-- Sequelize ORM
-- JWT for authentication
-- Bcrypt for password hashing
-- Swagger (swagger-jsdoc + swagger-ui-express)
-- CORS support
+- **Backend:** Node.js, Express.js, PostgreSQL, Sequelize ORM  
+- **Authentication:** JWT, Bcrypt  
+- **API Docs:** Swagger (swagger-jsdoc + swagger-ui-express)  
+- **Frontend:** Swift (SwiftUI) for iOS  
+- **Other:** CORS, dotenv
 
 ---
 
-## Installation
+## Frontend
 
-Clone the repository:
+The iOS app is built with **SwiftUI** and connects to the backend via REST API endpoints.  
+Features include:  
+
+- Browse and search events
+- Purchase tickets
+- View and manage user profile
+- Admin features (if logged in as admin)
+
+The Swift project is located in the `TICKEZY` folder.
+
+---
+
+## Backend Installation
+
+Clone the repository and navigate to the backend folder:
 
 ```bash
 git clone https://github.com/andremugabo/tickezy_app_swift_nodejs.git
@@ -61,9 +73,9 @@ npm install
 
 ---
 
-## Environment Variables
+## Backend Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in `tickezy_backend/`:
 
 ```env
 # Server
@@ -97,12 +109,13 @@ UPLOAD_FOLDER=uploads
 CREATE DATABASE tickezyApp_db;
 ```
 
-3. Sequelize will automatically sync models with the database when the server starts.
-   (Make sure your `User` model includes all required columns.)
+3. Sequelize will sync models automatically when the backend starts.
+
+> ⚠️ Make sure your `User` model includes all required columns (`id`, `email`, `name`, `password`, `role`, `phoneNumber`, etc.).
 
 ---
 
-## Running the App
+## Running the Backend
 
 Start the development server:
 
@@ -110,7 +123,7 @@ Start the development server:
 npm run dev
 ```
 
-Visit `http://localhost:3000` to check if the server is running.
+Backend will run at `http://localhost:3000`.
 
 ---
 
@@ -131,24 +144,53 @@ Endpoints include:
 
 ---
 
+## iOS Frontend Setup
+
+1. Open the Swift project:
+
+```bash
+cd TICKEZY
+open TICKEZY.xcodeproj
+```
+
+2. In Xcode, select your target device or simulator.
+3. Update the API base URL in your Swift code if necessary:
+
+```swift
+let baseURL = "http://localhost:3000/api"
+```
+
+4. Build and run the app in the simulator or a connected device.
+
+> ⚠️ Make sure the backend is running before using the app to fetch data.
+
+---
+
 ## Project Structure
 
 ```
-tickezy_backend/
+TICKEZY_FULLSTACK/
 │
-├── src/
-│   ├── controller/         # Controllers
-│   ├── models/             # Sequelize models
-│   ├── routes/             # Express routes
-│   ├── services/           # Business logic & helpers
-│   └── middleware/         # Authentication & authorization
+├── tickezy_backend/        # Node.js backend
+│   ├── src/
+│   │   ├── controller/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── middleware/
+│   ├── db.js
+│   ├── server.js
+│   ├── swagger.js
+│   ├── package.json
+│   └── .env
 │
-├── db.js                   # Database connection (Sequelize)
-├── server.js               # Entry point
-├── swagger.js              # Swagger setup
-├── package.json
-├── .env
-└── README.md
+└── TICKEZY/                # Swift iOS frontend
+    ├── TICKEZY.xcodeproj
+    ├── TICKEZYApp.swift
+    ├── ContentView.swift
+    ├── Assets.xcassets
+    ├── TICKEZYTests/
+    └── TICKEZYUITests/
 ```
 
 ---
@@ -165,5 +207,6 @@ tickezy_backend/
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.
+
 

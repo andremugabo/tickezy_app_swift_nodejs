@@ -13,40 +13,40 @@ tickezy_backend/package-lock.json
 tickezy_backend/yarn.lock
 
 # ===========================
-# iOS / Swift
+# iOS / Swift (TICKEZY)
 # ===========================
 # Xcode
-*.xcworkspace
-*.xcuserdatad
-*.xcuserdata/
-*.xcodeproj/project.xcworkspace/
-*.xcodeproj/xcuserdata/
-*.xcodeproj/xcshareddata/
+TICKEZY/*.xcworkspace
+TICKEZY/*.xcuserdatad
+TICKEZY/*.xcuserdata/
+TICKEZY/*.xcodeproj/project.xcworkspace/
+TICKEZY/*.xcodeproj/xcuserdata/
+TICKEZY/*.xcodeproj/xcshareddata/
 
 # Build
-build/
-DerivedData/
+TICKEZY/build/
+TICKEZY/DerivedData/
 
 # Swift Package Manager
-.swiftpm/
-Packages/
-Package.resolved
+TICKEZY/.swiftpm/
+TICKEZY/Packages/
+TICKEZY/Package.resolved
 
 # CocoaPods
-Pods/
-Podfile.lock
+TICKEZY/Pods/
+TICKEZY/Podfile.lock
 
 # Fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots/
-fastlane/test_output/
+TICKEZY/fastlane/report.xml
+TICKEZY/fastlane/Preview.html
+TICKEZY/fastlane/screenshots/
+TICKEZY/fastlane/test_output/
 
 # Logs
-*.log
+TICKEZY/*.log
 
 # ===========================
-# OS / IDE
+# Global OS / IDE
 # ===========================
 .DS_Store
 .vscode/
