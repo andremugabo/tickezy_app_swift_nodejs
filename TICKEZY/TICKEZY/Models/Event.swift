@@ -7,13 +7,14 @@
 
 import Foundation
 
-enum EventCategory: String, Codable {
+enum EventCategory: String, Codable, CaseIterable {
     case CONCERT, SPORTS, CONFERENCE, THEATER, OTHER
 }
 
-enum EventStatus: String, Codable {
+enum EventStatus: String, Codable, CaseIterable {
     case UPCOMING, ONGOING, COMPLETED, CANCELLED
 }
+
 
 struct Event: Codable, Identifiable {
     let id: String

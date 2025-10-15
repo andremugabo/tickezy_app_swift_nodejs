@@ -5,119 +5,145 @@
 //  Created by M.A on 10/15/25.
 //
 
+//
+//  EventView.swift
+//  TICKEZY
+//
+
 import SwiftUI
 
 struct EventView: View {
-    let events: [Event] = [
-        Event(
-            id: "1",
-            title: "Music Concert",
-            description: "An amazing evening with live performances.",
-            location: "Kigali Arena",
-            eventDate: Date().addingTimeInterval(86400 * 5), // 5 days from now
-            price: 25.0,
-            totalTickets: 100,
-            ticketsSold: 45,
-            imageURL: nil,
-            createdBy: "admin",
-            createdAt: Date(),
-            updatedAt: nil,
-            isPublished: true,
-            category: .CONCERT,
-            status: .UPCOMING
-        ),
-        Event(
-            id: "2",
-            title: "Tech Conference",
-            description: "Learn about the latest tech trends.",
-            location: "AUCA Hall",
-            eventDate: Date().addingTimeInterval(86400 * 20),
-            price: 50.0,
-            totalTickets: 200,
-            ticketsSold: 150,
-            imageURL: nil,
-            createdBy: "admin",
-            createdAt: Date(),
-            updatedAt: nil,
-            isPublished: true,
-            category: .CONFERENCE,
-            status: .UPCOMING
-        )
-    ]
+    @StateObject private var viewModel = EventViewModel()
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    ForEach(events) { event in
-                        VStack(alignment: .leading, spacing: 12) {
-                            
-                            // Event Image
-                            if let imageURL = event.imageURL, let url = URL(string: imageURL) {
-                                AsyncImage(url: url) { image in
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(height: 150)
-                                        .clipped()
-                                        .cornerRadius(12)
-                                } placeholder: {
-                                    Color.surfaceAlt
-                                        .frame(height: 150)
-                                        .cornerRadius(12)
-                                }
-                            }
-                            
-                            // Event Title & Description
-                            Text(event.title)
-                                .font(.headline)
-                                .foregroundColor(.primaryText)
-                            
-                            Text(event.description)
-                                .font(.subheadline)
-                                .foregroundColor(.secondaryText)
-                                .lineLimit(3)
-                            
-                            // Date & Location
-                            HStack {
-                                Text(event.eventDate.formatted(date: .abbreviated, time: .shortened))
-                                Spacer()
-                                Text(event.location)
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                            
-                            // Price & Tickets
-                            HStack {
-                                Text("Price: $\(String(format: "%.2f", event.price))")
-                                Spacer()
-                                Text("Available: \(event.availableTickets)")
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.secondaryText)
-                            
-                            // Buy Ticket Button
-                            NavigationLink(destination: TicketPurchaseView(event: event)) {
-                                Text("Buy Ticket")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.brandAccent)
-                                    .cornerRadius(12)
+            VStack {
+                // MARK: - Filters
+                HStack {
+                    Menu {
+                        ForEach(EventCategory.allCases, id: \.self) { category in
+                            Button(category.rawValue) {
+                                viewModel.selectedCategory = category
+                                Task { await viewModel.fetchEvents() }
                             }
                         }
-                        .padding()
-                        .background(event.status == .UPCOMING ? Color.surface : Color.surfaceAlt)
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.2), radius: 5)
-                        .padding(.horizontal)
+                        Button("All") {
+                            viewModel.selectedCategory = nil
+                            Task { await viewModel.fetchEvents() }
+                        }
+                    } label: {
+                        Label(viewModel.selectedCategory?.rawValue ?? "Category", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+
+                    Menu {
+                        ForEach(EventStatus.allCases, id: \.self) { status in
+                            Button(status.rawValue) {
+                                viewModel.selectedStatus = status
+                                Task { await viewModel.fetchEvents() }
+                            }
+                        }
+                        Button("All") {
+                            viewModel.selectedStatus = nil
+                            Task { await viewModel.fetchEvents() }
+                        }
+                    } label: {
+                        Label(viewModel.selectedStatus?.rawValue ?? "Status", systemImage: "line.3.horizontal.circle")
                     }
                 }
-                .padding(.top)
+                .padding(.horizontal)
+                
+                // MARK: - Search
+                TextField("Search events...", text: $viewModel.searchText, onCommit: {
+                    Task { await viewModel.fetchEvents() }
+                })
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+                
+                // MARK: - Event List
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        ForEach(viewModel.events) { event in
+                            EventCardView(event: event)
+                        }
+                    }
+                    .padding(.top)
+                }
             }
-            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Events")
+            .task {
+                await viewModel.fetchEvents()
+            }
+            .alert(isPresented: $viewModel.showError) {
+                Alert(title: Text("Error"), message: Text(viewModel.errorMessage), dismissButton: .default(Text("OK")))
+            }
         }
+    }
+}
+
+// MARK: - Event Card UI
+struct EventCardView: View {
+    let event: Event
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            
+            // Event Image
+            if let imageURL = event.imageURL, let url = URL(string: imageURL) {
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                        .scaledToFill()
+                        .frame(height: 150)
+                        .clipped()
+                        .cornerRadius(12)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                        .frame(height: 150)
+                        .cornerRadius(12)
+                }
+            }
+            
+            // Title & Description
+            Text(event.title)
+                .font(.headline)
+            
+            Text(event.description)
+                .font(.subheadline)
+                .lineLimit(3)
+                .foregroundColor(.secondary)
+            
+            // Date & Location
+            HStack {
+                Text(event.eventDate.formatted(date: .abbreviated, time: .shortened))
+                Spacer()
+                Text(event.location)
+            }
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            
+            // Price & Tickets
+            HStack {
+                Text("Price: $\(String(format: "%.2f", event.price))")
+                Spacer()
+                Text("Available: \(event.availableTickets)")
+            }
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            
+            // Buy Ticket Button
+            NavigationLink(destination: TicketPurchaseView(event: event)) {
+                Text("Buy Ticket")
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(12)
+            }
+        }
+        .padding()
+        .background(event.status == .UPCOMING ? Color.white : Color.gray.opacity(0.1))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.2), radius: 5)
+        .padding(.horizontal)
     }
 }
 
@@ -133,14 +159,9 @@ struct TicketPurchaseView: View {
             
             Text("Location: \(event.location)")
             Text("Price: $\(String(format: "%.2f", event.price))")
-            
             Spacer()
         }
         .padding()
         .navigationTitle("Buy Ticket")
     }
-}
-
-#Preview {
-    EventView()
 }
