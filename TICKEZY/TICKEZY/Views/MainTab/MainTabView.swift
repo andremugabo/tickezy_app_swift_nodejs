@@ -5,13 +5,14 @@
 //  Created by M.A on 10/14/25.
 //
 
-
 import SwiftUI
-import Foundation
 
 struct MainTabView: View {
     @EnvironmentObject var auth: AuthService
+    @StateObject private var userService = UserService.shared
     @State private var selectedTab = 0
+    @State private var isLoadingUsers = false
+    @State private var userErrorMessage: String?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -46,7 +47,6 @@ struct MainTabView: View {
                     Image(systemName: "ticket")
                     Text("Tickets")
                 }
-//                .badge(upcomingTicketsCount()) // Badge with live count
                 .tag(2)
 
             // MARK: - Profile Tab
@@ -56,6 +56,59 @@ struct MainTabView: View {
                     Text("Profile")
                 }
                 .tag(3)
+            
+            // MARK: - Admin Users Tab (only visible for ADMIN)
+            if let user = auth.currentUser, user.role == .ADMIN {
+                NavigationStack {
+                    VStack {
+                        if isLoadingUsers {
+                            ProgressView("Loading users...")
+                        } else if let errorMessage = userErrorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.stateError)
+                                .padding()
+                        } else {
+                            List(userService.allUsers) { u in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(u.name)
+                                        .font(.headline)
+                                    Text(u.email)
+                                        .font(.subheadline)
+                                        .foregroundColor(.textSecondary)
+                                    Text("Role: \(u.role.rawValue)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.textSecondary)
+                                    if let phone = u.phoneNumber {
+                                        Text("Phone: \(phone)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.textSecondary)
+                                    }
+                                    if let created = u.createdAt {
+                                        Text("Created: \(created.formatted(date: .abbreviated, time: .omitted))")
+                                            .font(.caption)
+                                            .foregroundColor(.textTertiary)
+                                    }
+                                    if let updated = u.updatedAt {
+                                        Text("Updated: \(updated.formatted(date: .abbreviated, time: .omitted))")
+                                            .font(.caption)
+                                            .foregroundColor(.textTertiary)
+                                    }
+                                }
+                                .padding(.vertical, 5)
+                            }
+                        }
+                    }
+                    .navigationTitle("All Users")
+                    .task {
+                        await loadAllUsers()
+                    }
+                }
+                .tabItem {
+                    Image(systemName: "person.3")
+                    Text("Users")
+                }
+                .tag(4)
+            }
         }
         .accentColor(.blue)
         .preferredColorScheme(.dark)
@@ -79,11 +132,17 @@ struct MainTabView: View {
         }
     }
 
-    // MARK: - Helper: Count upcoming valid tickets
-//    private func upcomingTicketsCount() -> Int {
-//        guard let tickets = auth.tickets else { return 0 }
-//        return tickets.filter {
-//            $0.status == TicketStatus.VALID && $0.purchaseDate >= Date()
-//        }.count
-//    }
+    // MARK: - Load All Users (Admin)
+    @MainActor
+    private func loadAllUsers() async {
+        guard let token = auth.token else { return }
+        isLoadingUsers = true
+        userErrorMessage = nil
+        do {
+            try await userService.fetchAllUsers(token: token)
+        } catch {
+            userErrorMessage = error.localizedDescription
+        }
+        isLoadingUsers = false
+    }
 }

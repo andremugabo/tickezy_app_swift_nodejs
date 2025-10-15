@@ -17,14 +17,15 @@ struct User: Codable, Identifiable, Equatable {
     let email: String
     let name: String
     let role: UserRole
-    let createdAt: Date?          
+    let createdAt: Date?
+    let updatedAt: Date?
     let lastLoginAt: Date?
     let fcmToken: String?
     let profileImageURL: String?
     let phoneNumber: String?
     
     enum CodingKeys: String, CodingKey {
-        case id, email, name, role, createdAt, lastLoginAt, fcmToken, profileImageURL, phoneNumber
+        case id, email, name, role, createdAt, updatedAt, lastLoginAt, fcmToken, profileImageURL, phoneNumber
     }
     
     // Shared ISO8601 formatter
@@ -34,13 +35,14 @@ struct User: Codable, Identifiable, Equatable {
         return formatter
     }()
     
-    // Memberwise initializer
+    // MARK: - Memberwise initializer
     init(
         id: String,
         email: String,
         name: String,
         role: UserRole,
         createdAt: Date? = nil,
+        updatedAt: Date? = nil,
         lastLoginAt: Date? = nil,
         fcmToken: String? = nil,
         profileImageURL: String? = nil,
@@ -51,13 +53,14 @@ struct User: Codable, Identifiable, Equatable {
         self.name = name
         self.role = role
         self.createdAt = createdAt
+        self.updatedAt = updatedAt
         self.lastLoginAt = lastLoginAt
         self.fcmToken = fcmToken
         self.profileImageURL = profileImageURL
         self.phoneNumber = phoneNumber
     }
     
-    // Custom decoding
+    // MARK: - Custom decoding
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -73,6 +76,14 @@ struct User: Codable, Identifiable, Equatable {
             createdAt = nil
         }
         
+        // Decode optional updatedAt safely
+        if let updatedAtString = try? container.decode(String.self, forKey: .updatedAt),
+           let date = User.isoFormatter.date(from: updatedAtString) {
+            updatedAt = date
+        } else {
+            updatedAt = nil
+        }
+        
         // Decode optional lastLoginAt safely
         if let lastLoginString = try? container.decode(String.self, forKey: .lastLoginAt),
            let date = User.isoFormatter.date(from: lastLoginString) {
@@ -86,7 +97,7 @@ struct User: Codable, Identifiable, Equatable {
         phoneNumber = try? container.decode(String.self, forKey: .phoneNumber)
     }
     
-    // Custom encoding
+    // MARK: - Custom encoding
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
@@ -95,6 +106,9 @@ struct User: Codable, Identifiable, Equatable {
         try container.encode(role, forKey: .role)
         if let createdAt {
             try container.encode(User.isoFormatter.string(from: createdAt), forKey: .createdAt)
+        }
+        if let updatedAt {
+            try container.encode(User.isoFormatter.string(from: updatedAt), forKey: .updatedAt)
         }
         if let lastLoginAt {
             try container.encode(User.isoFormatter.string(from: lastLoginAt), forKey: .lastLoginAt)
