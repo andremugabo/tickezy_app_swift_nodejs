@@ -158,7 +158,7 @@ exports.getProfile = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
     try {
       const users = await User.findAll({
-        attributes: { exclude: ['password'] } // don't return passwords
+        attributes: { exclude: ['password'] } 
       });
       res.status(200).json({ success: true, data: users });
     } catch (err) {
