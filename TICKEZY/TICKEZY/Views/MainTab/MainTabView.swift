@@ -11,8 +11,6 @@ struct MainTabView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var userService = UserService.shared
     @State private var selectedTab = 0
-    @State private var isLoadingUsers = false
-    @State private var userErrorMessage: String?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -27,8 +25,10 @@ struct MainTabView: View {
                     }
                 }
                 .tabItem {
-                    Image(systemName: "house")
-                    Text(user.role == .ADMIN ? "Dashboard" : "Home")
+                    Label(
+                        user.role == .ADMIN ? "Dashboard" : "Home",
+                        systemImage: user.role == .ADMIN ? "chart.bar.fill" : "house.fill"
+                    )
                 }
                 .tag(0)
             }
@@ -36,81 +36,36 @@ struct MainTabView: View {
             // MARK: - Events Tab
             EventView()
                 .tabItem {
-                    Image(systemName: "calendar")
-                    Text("Events")
+                    Label("Events", systemImage: "calendar")
                 }
                 .tag(1)
 
             // MARK: - Tickets Tab
             TicketView()
                 .tabItem {
-                    Image(systemName: "ticket")
-                    Text("Tickets")
+                    Label("Tickets", systemImage: "ticket.fill")
                 }
                 .tag(2)
 
-            // MARK: - Profile Tab
-            ProfileView()
-                .tabItem {
-                    Image(systemName: "person")
-                    Text("Profile")
-                }
-                .tag(3)
-            
             // MARK: - Admin Users Tab (only visible for ADMIN)
             if let user = auth.currentUser, user.role == .ADMIN {
                 NavigationStack {
-                    VStack {
-                        if isLoadingUsers {
-                            ProgressView("Loading users...")
-                        } else if let errorMessage = userErrorMessage {
-                            Text(errorMessage)
-                                .foregroundColor(.stateError)
-                                .padding()
-                        } else {
-                            List(userService.allUsers) { u in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(u.name)
-                                        .font(.headline)
-                                    Text(u.email)
-                                        .font(.subheadline)
-                                        .foregroundColor(.textSecondary)
-                                    Text("Role: \(u.role.rawValue)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.textSecondary)
-                                    if let phone = u.phoneNumber {
-                                        Text("Phone: \(phone)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.textSecondary)
-                                    }
-                                    if let created = u.createdAt {
-                                        Text("Created: \(created.formatted(date: .abbreviated, time: .omitted))")
-                                            .font(.caption)
-                                            .foregroundColor(.textTertiary)
-                                    }
-                                    if let updated = u.updatedAt {
-                                        Text("Updated: \(updated.formatted(date: .abbreviated, time: .omitted))")
-                                            .font(.caption)
-                                            .foregroundColor(.textTertiary)
-                                    }
-                                }
-                                .padding(.vertical, 5)
-                            }
-                        }
-                    }
-                    .navigationTitle("All Users")
-                    .task {
-                        await loadAllUsers()
-                    }
+                    AdminUsersView()
                 }
                 .tabItem {
-                    Image(systemName: "person.3")
-                    Text("Users")
+                    Label("Users", systemImage: "person.3.fill")
                 }
-                .tag(4)
+                .tag(3)
             }
+            
+            // MARK: - Profile Tab
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.circle.fill")
+                }
+                .tag(auth.currentUser?.role == .ADMIN ? 4 : 3)
         }
-        .accentColor(.blue)
+        .tint(.brandPrimary)
         .preferredColorScheme(.dark)
         .onAppear {
             configureTabBarAppearance()
@@ -122,27 +77,42 @@ struct MainTabView: View {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         
-        let backgroundColor = UIColor(Color.appBackground.opacity(0.9))
-        appearance.backgroundColor = backgroundColor
-        appearance.shadowColor = UIColor.gray.withAlphaComponent(0.3)
-
+        // Background color
+        appearance.backgroundColor = UIColor(Color.backgroundSecondary)
+        
+        // Shadow
+        appearance.shadowColor = UIColor.black.withAlphaComponent(0.3)
+        appearance.shadowImage = UIImage()
+        
+        // Selected item appearance
+        let selectedColor = UIColor(Color.brandPrimary)
+        appearance.stackedLayoutAppearance.selected.iconColor = selectedColor
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: selectedColor,
+            .font: UIFont.systemFont(ofSize: 11, weight: .semibold)
+        ]
+        
+        // Normal item appearance
+        let normalColor = UIColor(Color.textSecondary)
+        appearance.stackedLayoutAppearance.normal.iconColor = normalColor
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: normalColor,
+            .font: UIFont.systemFont(ofSize: 11, weight: .medium)
+        ]
+        
+        // Apply appearance
         UITabBar.appearance().standardAppearance = appearance
         if #available(iOS 15.0, *) {
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
+        
+        // Remove top border line
+        UITabBar.appearance().clipsToBounds = true
     }
+}
 
-    // MARK: - Load All Users (Admin)
-    @MainActor
-    private func loadAllUsers() async {
-        guard let token = auth.token else { return }
-        isLoadingUsers = true
-        userErrorMessage = nil
-        do {
-            try await userService.fetchAllUsers(token: token)
-        } catch {
-            userErrorMessage = error.localizedDescription
-        }
-        isLoadingUsers = false
-    }
+// MARK: - Preview
+#Preview {
+    MainTabView()
+        .environmentObject(AuthService.shared)
 }
