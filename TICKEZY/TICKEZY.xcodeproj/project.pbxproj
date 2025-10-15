@@ -6,41 +6,45 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FFF9F8E92E9EA5DF00AEAE55 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = FFF9F8E82E9EA5DF00AEAE55 /* KeychainAccess */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		FFBDD08E2E9DB5B000830523 /* PBXContainerItemProxy */ = {
+		FFA61E782E9E81D90096E526 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = FFBDD0782E9DB5AD00830523 /* Project object */;
+			containerPortal = FFA61E622E9E81D60096E526 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = FFBDD07F2E9DB5AD00830523;
+			remoteGlobalIDString = FFA61E692E9E81D60096E526;
 			remoteInfo = TICKEZY;
 		};
-		FFBDD0982E9DB5B000830523 /* PBXContainerItemProxy */ = {
+		FFA61E822E9E81D90096E526 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = FFBDD0782E9DB5AD00830523 /* Project object */;
+			containerPortal = FFA61E622E9E81D60096E526 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = FFBDD07F2E9DB5AD00830523;
+			remoteGlobalIDString = FFA61E692E9E81D60096E526;
 			remoteInfo = TICKEZY;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		FFBDD0802E9DB5AD00830523 /* TICKEZY.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TICKEZY.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FFBDD08D2E9DB5B000830523 /* TICKEZYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TICKEZYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FFBDD0972E9DB5B000830523 /* TICKEZYUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TICKEZYUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFA61E6A2E9E81D60096E526 /* TICKEZY.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TICKEZY.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFA61E772E9E81D90096E526 /* TICKEZYTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TICKEZYTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFA61E812E9E81D90096E526 /* TICKEZYUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TICKEZYUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		FFBDD0822E9DB5AD00830523 /* TICKEZY */ = {
+		FFA61E6C2E9E81D60096E526 /* TICKEZY */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TICKEZY;
 			sourceTree = "<group>";
 		};
-		FFBDD0902E9DB5B000830523 /* TICKEZYTests */ = {
+		FFA61E7A2E9E81D90096E526 /* TICKEZYTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TICKEZYTests;
 			sourceTree = "<group>";
 		};
-		FFBDD09A2E9DB5B000830523 /* TICKEZYUITests */ = {
+		FFA61E842E9E81D90096E526 /* TICKEZYUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TICKEZYUITests;
 			sourceTree = "<group>";
@@ -48,21 +52,22 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		FFBDD07D2E9DB5AD00830523 /* Frameworks */ = {
+		FFA61E672E9E81D60096E526 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FFF9F8E92E9EA5DF00AEAE55 /* KeychainAccess in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFA61E742E9E81D90096E526 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FFBDD08A2E9DB5B000830523 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FFBDD0942E9DB5B000830523 /* Frameworks */ = {
+		FFA61E7E2E9E81D90096E526 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -72,22 +77,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		FFBDD0772E9DB5AD00830523 = {
+		FFA61E612E9E81D60096E526 = {
 			isa = PBXGroup;
 			children = (
-				FFBDD0822E9DB5AD00830523 /* TICKEZY */,
-				FFBDD0902E9DB5B000830523 /* TICKEZYTests */,
-				FFBDD09A2E9DB5B000830523 /* TICKEZYUITests */,
-				FFBDD0812E9DB5AD00830523 /* Products */,
+				FFA61E6C2E9E81D60096E526 /* TICKEZY */,
+				FFA61E7A2E9E81D90096E526 /* TICKEZYTests */,
+				FFA61E842E9E81D90096E526 /* TICKEZYUITests */,
+				FFA61E6B2E9E81D60096E526 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		FFBDD0812E9DB5AD00830523 /* Products */ = {
+		FFA61E6B2E9E81D60096E526 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FFBDD0802E9DB5AD00830523 /* TICKEZY.app */,
-				FFBDD08D2E9DB5B000830523 /* TICKEZYTests.xctest */,
-				FFBDD0972E9DB5B000830523 /* TICKEZYUITests.xctest */,
+				FFA61E6A2E9E81D60096E526 /* TICKEZY.app */,
+				FFA61E772E9E81D90096E526 /* TICKEZYTests.xctest */,
+				FFA61E812E9E81D90096E526 /* TICKEZYUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,134 +100,138 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FFBDD07F2E9DB5AD00830523 /* TICKEZY */ = {
+		FFA61E692E9E81D60096E526 /* TICKEZY */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FFBDD0A12E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZY" */;
+			buildConfigurationList = FFA61E8B2E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZY" */;
 			buildPhases = (
-				FFBDD07C2E9DB5AD00830523 /* Sources */,
-				FFBDD07D2E9DB5AD00830523 /* Frameworks */,
-				FFBDD07E2E9DB5AD00830523 /* Resources */,
+				FFA61E662E9E81D60096E526 /* Sources */,
+				FFA61E672E9E81D60096E526 /* Frameworks */,
+				FFA61E682E9E81D60096E526 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				FFBDD0822E9DB5AD00830523 /* TICKEZY */,
+				FFA61E6C2E9E81D60096E526 /* TICKEZY */,
 			);
 			name = TICKEZY;
 			packageProductDependencies = (
+				FFF9F8E82E9EA5DF00AEAE55 /* KeychainAccess */,
 			);
 			productName = TICKEZY;
-			productReference = FFBDD0802E9DB5AD00830523 /* TICKEZY.app */;
+			productReference = FFA61E6A2E9E81D60096E526 /* TICKEZY.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FFBDD08C2E9DB5B000830523 /* TICKEZYTests */ = {
+		FFA61E762E9E81D90096E526 /* TICKEZYTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FFBDD0A42E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZYTests" */;
+			buildConfigurationList = FFA61E8E2E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZYTests" */;
 			buildPhases = (
-				FFBDD0892E9DB5B000830523 /* Sources */,
-				FFBDD08A2E9DB5B000830523 /* Frameworks */,
-				FFBDD08B2E9DB5B000830523 /* Resources */,
+				FFA61E732E9E81D90096E526 /* Sources */,
+				FFA61E742E9E81D90096E526 /* Frameworks */,
+				FFA61E752E9E81D90096E526 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				FFBDD08F2E9DB5B000830523 /* PBXTargetDependency */,
+				FFA61E792E9E81D90096E526 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FFBDD0902E9DB5B000830523 /* TICKEZYTests */,
+				FFA61E7A2E9E81D90096E526 /* TICKEZYTests */,
 			);
 			name = TICKEZYTests;
 			packageProductDependencies = (
 			);
 			productName = TICKEZYTests;
-			productReference = FFBDD08D2E9DB5B000830523 /* TICKEZYTests.xctest */;
+			productReference = FFA61E772E9E81D90096E526 /* TICKEZYTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FFBDD0962E9DB5B000830523 /* TICKEZYUITests */ = {
+		FFA61E802E9E81D90096E526 /* TICKEZYUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FFBDD0A72E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZYUITests" */;
+			buildConfigurationList = FFA61E912E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZYUITests" */;
 			buildPhases = (
-				FFBDD0932E9DB5B000830523 /* Sources */,
-				FFBDD0942E9DB5B000830523 /* Frameworks */,
-				FFBDD0952E9DB5B000830523 /* Resources */,
+				FFA61E7D2E9E81D90096E526 /* Sources */,
+				FFA61E7E2E9E81D90096E526 /* Frameworks */,
+				FFA61E7F2E9E81D90096E526 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				FFBDD0992E9DB5B000830523 /* PBXTargetDependency */,
+				FFA61E832E9E81D90096E526 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FFBDD09A2E9DB5B000830523 /* TICKEZYUITests */,
+				FFA61E842E9E81D90096E526 /* TICKEZYUITests */,
 			);
 			name = TICKEZYUITests;
 			packageProductDependencies = (
 			);
 			productName = TICKEZYUITests;
-			productReference = FFBDD0972E9DB5B000830523 /* TICKEZYUITests.xctest */;
+			productReference = FFA61E812E9E81D90096E526 /* TICKEZYUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		FFBDD0782E9DB5AD00830523 /* Project object */ = {
+		FFA61E622E9E81D60096E526 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					FFBDD07F2E9DB5AD00830523 = {
+					FFA61E692E9E81D60096E526 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					FFBDD08C2E9DB5B000830523 = {
+					FFA61E762E9E81D90096E526 = {
 						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = FFBDD07F2E9DB5AD00830523;
+						TestTargetID = FFA61E692E9E81D60096E526;
 					};
-					FFBDD0962E9DB5B000830523 = {
+					FFA61E802E9E81D90096E526 = {
 						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = FFBDD07F2E9DB5AD00830523;
+						TestTargetID = FFA61E692E9E81D60096E526;
 					};
 				};
 			};
-			buildConfigurationList = FFBDD07B2E9DB5AD00830523 /* Build configuration list for PBXProject "TICKEZY" */;
+			buildConfigurationList = FFA61E652E9E81D60096E526 /* Build configuration list for PBXProject "TICKEZY" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = FFBDD0772E9DB5AD00830523;
+			mainGroup = FFA61E612E9E81D60096E526;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FFF9F8E72E9EA5DF00AEAE55 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = FFBDD0812E9DB5AD00830523 /* Products */;
+			productRefGroup = FFA61E6B2E9E81D60096E526 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FFBDD07F2E9DB5AD00830523 /* TICKEZY */,
-				FFBDD08C2E9DB5B000830523 /* TICKEZYTests */,
-				FFBDD0962E9DB5B000830523 /* TICKEZYUITests */,
+				FFA61E692E9E81D60096E526 /* TICKEZY */,
+				FFA61E762E9E81D90096E526 /* TICKEZYTests */,
+				FFA61E802E9E81D90096E526 /* TICKEZYUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		FFBDD07E2E9DB5AD00830523 /* Resources */ = {
+		FFA61E682E9E81D60096E526 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FFBDD08B2E9DB5B000830523 /* Resources */ = {
+		FFA61E752E9E81D90096E526 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FFBDD0952E9DB5B000830523 /* Resources */ = {
+		FFA61E7F2E9E81D90096E526 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -232,21 +241,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		FFBDD07C2E9DB5AD00830523 /* Sources */ = {
+		FFA61E662E9E81D60096E526 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FFBDD0892E9DB5B000830523 /* Sources */ = {
+		FFA61E732E9E81D90096E526 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FFBDD0932E9DB5B000830523 /* Sources */ = {
+		FFA61E7D2E9E81D90096E526 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -256,20 +265,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		FFBDD08F2E9DB5B000830523 /* PBXTargetDependency */ = {
+		FFA61E792E9E81D90096E526 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FFBDD07F2E9DB5AD00830523 /* TICKEZY */;
-			targetProxy = FFBDD08E2E9DB5B000830523 /* PBXContainerItemProxy */;
+			target = FFA61E692E9E81D60096E526 /* TICKEZY */;
+			targetProxy = FFA61E782E9E81D90096E526 /* PBXContainerItemProxy */;
 		};
-		FFBDD0992E9DB5B000830523 /* PBXTargetDependency */ = {
+		FFA61E832E9E81D90096E526 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FFBDD07F2E9DB5AD00830523 /* TICKEZY */;
-			targetProxy = FFBDD0982E9DB5B000830523 /* PBXContainerItemProxy */;
+			target = FFA61E692E9E81D60096E526 /* TICKEZY */;
+			targetProxy = FFA61E822E9E81D90096E526 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		FFBDD09F2E9DB5B000830523 /* Debug */ = {
+		FFA61E892E9E81D90096E526 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -332,7 +341,7 @@
 			};
 			name = Debug;
 		};
-		FFBDD0A02E9DB5B000830523 /* Release */ = {
+		FFA61E8A2E9E81D90096E526 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -388,15 +397,18 @@
 			};
 			name = Release;
 		};
-		FFBDD0A22E9DB5B000830523 /* Debug */ = {
+		FFA61E8C2E9E81D90096E526 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tickezy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -419,15 +431,18 @@
 			};
 			name = Debug;
 		};
-		FFBDD0A32E9DB5B000830523 /* Release */ = {
+		FFA61E8D2E9E81D90096E526 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tickezy;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -450,7 +465,7 @@
 			};
 			name = Release;
 		};
-		FFBDD0A52E9DB5B000830523 /* Debug */ = {
+		FFA61E8F2E9E81D90096E526 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -471,7 +486,7 @@
 			};
 			name = Debug;
 		};
-		FFBDD0A62E9DB5B000830523 /* Release */ = {
+		FFA61E902E9E81D90096E526 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -492,7 +507,7 @@
 			};
 			name = Release;
 		};
-		FFBDD0A82E9DB5B000830523 /* Debug */ = {
+		FFA61E922E9E81D90096E526 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -511,7 +526,7 @@
 			};
 			name = Debug;
 		};
-		FFBDD0A92E9DB5B000830523 /* Release */ = {
+		FFA61E932E9E81D90096E526 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -533,43 +548,62 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FFBDD07B2E9DB5AD00830523 /* Build configuration list for PBXProject "TICKEZY" */ = {
+		FFA61E652E9E81D60096E526 /* Build configuration list for PBXProject "TICKEZY" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FFBDD09F2E9DB5B000830523 /* Debug */,
-				FFBDD0A02E9DB5B000830523 /* Release */,
+				FFA61E892E9E81D90096E526 /* Debug */,
+				FFA61E8A2E9E81D90096E526 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FFBDD0A12E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZY" */ = {
+		FFA61E8B2E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZY" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FFBDD0A22E9DB5B000830523 /* Debug */,
-				FFBDD0A32E9DB5B000830523 /* Release */,
+				FFA61E8C2E9E81D90096E526 /* Debug */,
+				FFA61E8D2E9E81D90096E526 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FFBDD0A42E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZYTests" */ = {
+		FFA61E8E2E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZYTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FFBDD0A52E9DB5B000830523 /* Debug */,
-				FFBDD0A62E9DB5B000830523 /* Release */,
+				FFA61E8F2E9E81D90096E526 /* Debug */,
+				FFA61E902E9E81D90096E526 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FFBDD0A72E9DB5B000830523 /* Build configuration list for PBXNativeTarget "TICKEZYUITests" */ = {
+		FFA61E912E9E81D90096E526 /* Build configuration list for PBXNativeTarget "TICKEZYUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FFBDD0A82E9DB5B000830523 /* Debug */,
-				FFBDD0A92E9DB5B000830523 /* Release */,
+				FFA61E922E9E81D90096E526 /* Debug */,
+				FFA61E932E9E81D90096E526 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FFF9F8E72E9EA5DF00AEAE55 /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FFF9F8E82E9EA5DF00AEAE55 /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FFF9F8E72E9EA5DF00AEAE55 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = FFBDD0782E9DB5AD00830523 /* Project object */;
+	rootObject = FFA61E622E9E81D60096E526 /* Project object */;
 }

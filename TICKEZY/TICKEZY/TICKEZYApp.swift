@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct TICKEZYApp: App {
+    @StateObject private var auth = AuthService.shared
+    
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashScreen()
+                .environmentObject(auth)
         }
     }
 }
