@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 const setupSwagger = require('./swagger');
 const userRoutes = require('./src/routes/userRoutes');
+const eventRoutes = require('./src/routes/eventRoutes')
 
 // Middleware
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use(cors({
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/events',eventRoutes);
 
 // Swagger
 setupSwagger(app);
