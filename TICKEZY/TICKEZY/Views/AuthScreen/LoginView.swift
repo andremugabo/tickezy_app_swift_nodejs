@@ -260,8 +260,8 @@ struct LoginView: View {
     // MARK: - Forgot Password Button
     
     private var forgotPasswordButton: some View {
-        Button {
-            // Handle forgot password
+        NavigationLink {
+            ForgotPasswordView()
         } label: {
             Text("Forgot Password?")
                 .font(.subheadline)

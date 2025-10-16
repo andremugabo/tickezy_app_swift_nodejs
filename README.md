@@ -65,6 +65,9 @@ The Swift project is located in the `TICKEZY` folder.
 ![Project User Screen View](./screenshort/usedispacth.png)
 ![Project Login](./screenshort/login.png)
 ![Project Signup](./screenshort/signup.png)
+![Project Event](./screenshort/events.png)
+![Project Event Detail](./screenshort/eventdetails.png)
+![Project BuyTicket](./screenshort/buyticket.png)
 
 ---
 

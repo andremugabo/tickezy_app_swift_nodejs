@@ -66,7 +66,6 @@ class EventService: ObservableObject {
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "limit", value: "\(limit)")
             ]
-
             if let category { queryItems.append(URLQueryItem(name: "category", value: category.rawValue)) }
             if let status { queryItems.append(URLQueryItem(name: "status", value: status.rawValue)) }
             if let isPublished { queryItems.append(URLQueryItem(name: "isPublished", value: "\(isPublished)")) }
@@ -76,12 +75,13 @@ class EventService: ObservableObject {
             components.queryItems = queryItems
             guard let url = components.url else { throw URLError(.badURL) }
 
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            print("Fetching events from URL:", url.absoluteString)
 
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
             guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+
+            print("HTTP Status Code:", httpResponse.statusCode)
+            print("Response Data:", String(data: data, encoding: .utf8) ?? "")
 
             switch httpResponse.statusCode {
             case 200:
@@ -90,20 +90,22 @@ class EventService: ObservableObject {
                 let result = try decoder.decode(EventsResponse.self, from: data)
                 self.events = result.data
                 self.pagination = result.pagination
+                print("Fetched events count:", self.events.count)
             default:
                 if let errorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
                     self.errorMessage = errorResponse.message
                 } else {
-                    let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-                    self.errorMessage = message
+                    self.errorMessage = String(data: data, encoding: .utf8)
                 }
                 self.events = []
             }
         } catch {
+            print("Fetch events error:", error)
             self.errorMessage = error.localizedDescription
             self.events = []
         }
     }
+
 
     // MARK: - Fetch single event by ID
     func fetchEventById(_ id: String) async {

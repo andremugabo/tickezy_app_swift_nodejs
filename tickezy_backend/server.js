@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path'); // Add this import
 
 dotenv.config();
 
@@ -20,9 +21,12 @@ app.use(cors({
   methods: ['GET','POST','PUT','DELETE'],
 }));
 
+// ✅ ADD THIS LINE - Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Routes
 app.use('/api/users', userRoutes);
-app.use('/api/events',eventRoutes);
+app.use('/api/events', eventRoutes);
 
 // Swagger
 setupSwagger(app);
