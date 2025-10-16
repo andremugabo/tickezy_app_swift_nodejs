@@ -47,17 +47,50 @@ struct MainTabView: View {
                 }
                 .tag(2)
 
-            // MARK: - Admin Users Tab (only visible for ADMIN)
+            // MARK: - Admin Management Tab (only visible for ADMIN)
             if let user = auth.currentUser, user.role == .ADMIN {
                 NavigationStack {
-                    AdminUsersView()
+                    
+                    ZStack {
+                        Color.backgroundPrimary.ignoresSafeArea()
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                
+                                // Manage Events
+                                NavigationLink {
+                                    EventManagement()
+                                } label: {
+                                    ActionCard(
+                                        title: "Manage Events",
+                                        subtitle: "Create and manage events",
+                                        icon: "calendar.badge.plus",
+                                        color: .brandPrimary
+                                    )
+                                }
+                                
+                                // Manage Users
+                                NavigationLink {
+                                    AdminUsersView()
+                                } label: {
+                                    ActionCard(
+                                        title: "Manage Users",
+                                        subtitle: "View and control user accounts",
+                                        icon: "person.3.fill",
+                                        color: .brandSecondary
+                                    )
+                                }
+                            }
+                            .padding()
+                        }
+                        .navigationTitle("Admin Tools")
+                    }
                 }
                 .tabItem {
-                    Label("Users", systemImage: "person.3.fill")
+                    Label("Admin", systemImage: "gearshape.fill")
                 }
                 .tag(3)
             }
-            
+
             // MARK: - Profile Tab
             ProfileView()
                 .tabItem {
