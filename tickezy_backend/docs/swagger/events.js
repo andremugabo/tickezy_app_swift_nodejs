@@ -152,35 +152,14 @@
  * @swagger
  * /api/events:
  *   get:
- *     summary: Get all events
+ *     summary: Get all events (no filters)
  *     tags: [Events]
+ *     description: Retrieve all events without applying any filters. Pagination is supported with page and limit.
  *     parameters:
- *       - name: category
- *         in: query
- *         required: false
- *         schema:
- *           type: string
- *           enum: [CONCERT, SPORTS, CONFERENCE, THEATER, OTHER]
- *       - name: status
- *         in: query
- *         required: false
- *         schema:
- *           type: string
- *           enum: [UPCOMING, ONGOING, COMPLETED, CANCELLED]
- *       - name: isPublished
- *         in: query
- *         required: false
- *         schema:
- *           type: boolean
- *       - name: search
- *         in: query
- *         required: false
- *         schema:
- *           type: string
- *           example: concert
  *       - name: page
  *         in: query
  *         required: false
+ *         description: Page number for pagination
  *         schema:
  *           type: integer
  *           default: 1
@@ -188,13 +167,14 @@
  *       - name: limit
  *         in: query
  *         required: false
+ *         description: Number of events per page
  *         schema:
  *           type: integer
  *           default: 10
  *           minimum: 1
  *     responses:
  *       200:
- *         description: List of events retrieved successfully with pagination
+ *         description: List of all events retrieved successfully with pagination
  *         content:
  *           application/json:
  *             schema:
@@ -223,6 +203,7 @@
  *                       type: integer
  *                       example: 10
  */
+
 
 
 /**

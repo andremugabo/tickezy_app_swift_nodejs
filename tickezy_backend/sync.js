@@ -7,7 +7,7 @@ async function syncDatabase() {
     console.log('Database connected successfully.');
 
     // Sync all models
-    await sequelize.sync({ force: true }); // WARNING: force:true will DROP tables if they exist
+    await sequelize.sync({ force: true }); 
     console.log('All models were synchronized successfully.');
 
     // Seed initial data

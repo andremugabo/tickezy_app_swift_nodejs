@@ -9,7 +9,11 @@ import SwiftUI
 
 struct TicketView: View {
     var body: some View {
-        Text("Ticket view")
+        ZStack{
+            Color.backgroundPrimary.ignoresSafeArea()
+            Text("Ticket view")
+        }
+        
     }
 }
 

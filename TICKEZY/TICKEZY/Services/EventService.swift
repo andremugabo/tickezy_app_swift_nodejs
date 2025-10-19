@@ -153,9 +153,25 @@ class EventService: ObservableObject {
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
             request.httpBody = try event.toMultipartFormData(boundary: boundary)
 
-            let (_, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 201 else {
-                throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to create event"])
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+
+            print("Create Event Status Code:", httpResponse.statusCode)
+            print("Create Event Response:", String(data: data, encoding: .utf8) ?? "")
+
+            switch httpResponse.statusCode {
+            case 201:
+                // Success - clear any previous errors
+                self.errorMessage = nil
+            default:
+                // Parse backend error
+                if let errorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
+                    self.errorMessage = errorResponse.message
+                } else {
+                    self.errorMessage = String(data: data, encoding: .utf8) ?? "Failed to create event"
+                }
             }
         } catch {
             self.errorMessage = error.localizedDescription
@@ -175,9 +191,25 @@ class EventService: ObservableObject {
             request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
             request.httpBody = try event.toMultipartFormData(boundary: boundary)
 
-            let (_, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to update event"])
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+
+            print("Update Event Status Code:", httpResponse.statusCode)
+            print("Update Event Response:", String(data: data, encoding: .utf8) ?? "")
+
+            switch httpResponse.statusCode {
+            case 200:
+                // Success
+                self.errorMessage = nil
+            default:
+                // Parse backend error
+                if let errorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
+                    self.errorMessage = errorResponse.message
+                } else {
+                    self.errorMessage = String(data: data, encoding: .utf8) ?? "Failed to update event"
+                }
             }
         } catch {
             self.errorMessage = error.localizedDescription

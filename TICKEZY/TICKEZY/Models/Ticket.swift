@@ -18,9 +18,9 @@ struct Ticket: Codable, Identifiable {
     let purchaseDate: Date
     let quantity: Int
     let qrCodeURL: String?
-    let status: TicketStatus
-    let usedAt: Date?
-    let checkedInBy: String?
+    var status: TicketStatus
+    var usedAt: Date?
+    var checkedInBy: String?
     let createdAt: Date
     let updatedAt: Date?
 }

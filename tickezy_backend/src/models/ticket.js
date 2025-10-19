@@ -12,7 +12,7 @@ const Ticket = sequelize.define('Ticket', {
     type: DataTypes.INTEGER,
     defaultValue: 1,
   },
-  qrCodeURL: DataTypes.STRING,
+  qrCodeURL: DataTypes.TEXT,
   status: {
     type: DataTypes.ENUM('VALID', 'USED', 'CANCELLED', 'REFUNDED'),
     defaultValue: 'VALID',

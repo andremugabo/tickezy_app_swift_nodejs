@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path'); // Add this import
+const path = require('path'); 
 
 dotenv.config();
 
@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 3000;
 
 const setupSwagger = require('./swagger');
 const userRoutes = require('./src/routes/userRoutes');
-const eventRoutes = require('./src/routes/eventRoutes')
+const eventRoutes = require('./src/routes/eventRoutes');
+const ticketRoutes = require('./src/routes/ticketRoutes');
 
 // Middleware
 app.use(express.json());
@@ -21,12 +22,13 @@ app.use(cors({
   methods: ['GET','POST','PUT','DELETE'],
 }));
 
-// ✅ ADD THIS LINE - Serve static files from uploads directory
+// THIS LINE - Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Swagger
 setupSwagger(app);

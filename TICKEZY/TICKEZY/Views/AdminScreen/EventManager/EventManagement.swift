@@ -12,7 +12,6 @@ struct EventManagement: View {
     @StateObject private var eventService = EventService.shared
     @EnvironmentObject var auth: AuthService
     @State private var showingCreateEvent = false
-    @State private var showingEditEvent = false
     @State private var selectedEvent: Event?
     @State private var showingDeleteConfirmation = false
     @State private var eventToDelete: Event?
@@ -59,15 +58,13 @@ struct EventManagement: View {
                         }
                     }
             }
-            .sheet(isPresented: $showingEditEvent) {
-                if let event = selectedEvent {
-                    EditEventView(event: event)
-                        .onDisappear {
-                            Task {
-                                await eventService.fetchEvents()
-                            }
+            .sheet(item: $selectedEvent) { event in
+                EditEventView(event: event)
+                    .onDisappear {
+                        Task {
+                            await eventService.fetchEvents()
                         }
-                }
+                    }
             }
             .confirmationDialog("Delete Event", isPresented: $showingDeleteConfirmation) {
                 Button("Delete", role: .destructive) {
@@ -125,8 +122,9 @@ struct EventManagement: View {
                     AdminEventCard(
                         event: event,
                         onEdit: {
+                            print("🔧 Edit button tapped for: \(event.title)")
                             selectedEvent = event
-                            showingEditEvent = true
+                            print("🔧 selectedEvent set to: \(event.title)")
                         },
                         onDelete: {
                             eventToDelete = event
@@ -695,7 +693,7 @@ struct EditEventView: View {
                             Text("Event Date & Time")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.textSecondary)
-                            DatePicker("", selection: $eventDate, in: Date()...)
+                            DatePicker("", selection: $eventDate)
                                 .datePickerStyle(.compact)
                                 .padding(12)
                                 .background(Color.surface)
@@ -789,6 +787,7 @@ struct EditEventView: View {
                 )
             }
             .onAppear {
+                print("✏️ EditEventView appeared for: \(event.title)")
                 loadEventData()
             }
         }
@@ -873,6 +872,7 @@ struct EditEventView: View {
     }
     
     private func loadEventData() {
+        print("📝 Loading event data...")
         title = event.title
         description = event.description
         location = event.location
@@ -882,6 +882,7 @@ struct EditEventView: View {
         category = event.category
         status = event.status
         isPublished = event.isPublished
+        print("✅ Event data loaded - Title: \(title)")
     }
     
     private func updateEvent() async {
