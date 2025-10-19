@@ -7,8 +7,11 @@
 
 import Foundation
 
-enum TicketStatus: String, Codable {
-    case VALID, USED, CANCELLED, REFUNDED
+enum TicketStatus: String, Codable, CaseIterable {
+    case VALID
+    case USED
+    case CANCELLED
+    case REFUNDED
 }
 
 struct Ticket: Codable, Identifiable {
@@ -23,4 +26,14 @@ struct Ticket: Codable, Identifiable {
     var checkedInBy: String?
     let createdAt: Date
     let updatedAt: Date?
+    
+    // Related event (if included from backend)
+    let Event: Event?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, userId, eventId, purchaseDate, quantity
+        case qrCodeURL, status, usedAt, checkedInBy
+        case createdAt, updatedAt
+        case Event
+    }
 }

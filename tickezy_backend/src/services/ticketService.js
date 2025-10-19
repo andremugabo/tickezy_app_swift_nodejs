@@ -1,9 +1,16 @@
-const { Ticket, Event } = require('../models');
+const { Ticket, Event, User } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 
-// Create a new ticket
-async function createTicket({ eventId, quantity = 1, checkedInBy }) {
+/**
+ * Create a new ticket
+ * @param {Object} param0 - ticket data
+ * @param {string} param0.userId - ID of the user purchasing the ticket
+ * @param {string} param0.eventId - ID of the event
+ * @param {number} param0.quantity - Number of tickets
+ * @param {string} [param0.checkedInBy] - Optional check-in user
+ */
+async function createTicket({ userId, eventId, quantity = 1, checkedInBy }) {
   const event = await Event.findByPk(eventId);
   if (!event) throw new Error('Event not found');
 
@@ -16,6 +23,7 @@ async function createTicket({ eventId, quantity = 1, checkedInBy }) {
 
   const ticket = await Ticket.create({
     id: uuidv4(),
+    userId, // assign ownership
     eventId,
     quantity,
     purchaseDate: new Date(),
@@ -29,22 +37,51 @@ async function createTicket({ eventId, quantity = 1, checkedInBy }) {
   return ticket;
 }
 
-// Get all tickets
-async function getAllTickets() {
-  return await Ticket.findAll({ include: [Event] });
+/**
+ * Get all tickets
+ * @param {Object} user - authenticated user object
+ */
+async function getAllTickets(user) {
+  const query = { include: [Event, User] };
+
+  // Non-admin users see only their tickets
+  if (user.role?.toUpperCase() !== 'ADMIN') {
+    query.where = { userId: user.id };
+  }
+
+  return await Ticket.findAll(query);
 }
 
-// Get a single ticket
-async function getTicketById(id) {
-  const ticket = await Ticket.findByPk(id, { include: [Event] });
+/**
+ * Get a single ticket
+ * @param {string} id - ticket ID
+ * @param {Object} user - authenticated user
+ */
+async function getTicketById(id, user) {
+  const ticket = await Ticket.findByPk(id, { include: [Event, User] });
   if (!ticket) throw new Error('Ticket not found');
+
+  if (user.role?.toUpperCase() !== 'ADMIN' && ticket.userId !== user.id) {
+    throw new Error('Access denied');
+  }
+
   return ticket;
 }
 
-// Update ticket status
-async function updateTicketStatus(id, status) {
+/**
+ * Update ticket status (admin or staff only)
+ * @param {string} id - ticket ID
+ * @param {string} status - new status
+ * @param {Object} user - authenticated user performing update
+ */
+async function updateTicketStatus(id, status, user) {
   const ticket = await Ticket.findByPk(id);
   if (!ticket) throw new Error('Ticket not found');
+
+  const allowedRoles = ['ADMIN', 'STAFF'];
+  if (!allowedRoles.includes(user.role?.toUpperCase())) {
+    throw new Error('Access denied: Only admin or staff can update ticket status');
+  }
 
   await ticket.update({
     status,
@@ -54,7 +91,10 @@ async function updateTicketStatus(id, status) {
   return ticket;
 }
 
-// Delete a ticket
+/**
+ * Delete a ticket (admin only)
+ * @param {string} id - ticket ID
+ */
 async function deleteTicket(id) {
   const ticket = await Ticket.findByPk(id);
   if (!ticket) throw new Error('Ticket not found');
