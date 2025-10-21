@@ -2,7 +2,7 @@
  * @swagger
  * tags:
  *   name: Tickets
- *   description: Ticket creation, management, and viewing
+ *   description: Endpoints for creating, managing, verifying, and viewing event tickets
  */
 
 /**
@@ -10,6 +10,7 @@
  * /api/tickets:
  *   post:
  *     summary: Create a new ticket
+ *     description: Allows an authenticated user to purchase or generate a new event ticket.
  *     tags: [Tickets]
  *     security:
  *       - bearerAuth: []
@@ -25,17 +26,15 @@
  *               eventId:
  *                 type: string
  *                 format: uuid
+ *                 description: The unique ID of the event this ticket belongs to.
  *                 example: 550e8400-e29b-41d4-a716-446655440000
  *               quantity:
  *                 type: integer
+ *                 description: Number of tickets to create.
  *                 example: 2
- *               checkedInBy:
- *                 type: string
- *                 format: uuid
- *                 example: 123e4567-e89b-12d3-a456-426614174000
  *     responses:
  *       201:
- *         description: Ticket created successfully
+ *         description: Ticket(s) created successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -44,10 +43,15 @@
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Ticket created successfully
  *                 ticket:
  *                   $ref: '#/components/schemas/Ticket'
  *       400:
- *         description: Invalid input or event not found
+ *         description: Invalid input or event not found.
+ *       401:
+ *         description: Unauthorized (missing or invalid token).
  */
 
 /**
@@ -55,10 +59,13 @@
  * /api/tickets:
  *   get:
  *     summary: Get all tickets
+ *     description: Retrieves all tickets. Admins see all; regular users only see their own.
  *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of tickets retrieved successfully
+ *         description: Tickets retrieved successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -67,12 +74,12 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 data:
+ *                 tickets:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Ticket'
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
  */
 
 /**
@@ -80,18 +87,21 @@
  * /api/tickets/{id}:
  *   get:
  *     summary: Get a ticket by ID
+ *     description: Retrieve a specific ticket by its unique identifier.
  *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: Ticket ID
+ *         description: Ticket UUID
  *         schema:
  *           type: string
  *           format: uuid
  *     responses:
  *       200:
- *         description: Ticket retrieved successfully
+ *         description: Ticket retrieved successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -103,7 +113,7 @@
  *                 ticket:
  *                   $ref: '#/components/schemas/Ticket'
  *       404:
- *         description: Ticket not found
+ *         description: Ticket not found.
  */
 
 /**
@@ -111,12 +121,15 @@
  * /api/tickets/{id}/status:
  *   put:
  *     summary: Update ticket status
+ *     description: Allows admins or event staff to update the status of a ticket.
  *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: Ticket ID
+ *         description: Ticket UUID
  *         schema:
  *           type: string
  *           format: uuid
@@ -131,11 +144,11 @@
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [USED, UNUSED]
+ *                 enum: [VALID, USED, CANCELLED, REFUNDED]
  *                 example: USED
  *     responses:
  *       200:
- *         description: Ticket status updated successfully
+ *         description: Ticket status updated successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -147,7 +160,9 @@
  *                 ticket:
  *                   $ref: '#/components/schemas/Ticket'
  *       400:
- *         description: Invalid input or ticket not found
+ *         description: Invalid status or ticket not found.
+ *       403:
+ *         description: Forbidden (insufficient permissions).
  */
 
 /**
@@ -155,18 +170,21 @@
  * /api/tickets/{id}:
  *   delete:
  *     summary: Delete a ticket
+ *     description: Permanently remove a ticket from the system (admin only).
  *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: Ticket ID
+ *         description: Ticket UUID
  *         schema:
  *           type: string
  *           format: uuid
  *     responses:
  *       200:
- *         description: Ticket deleted successfully
+ *         description: Ticket deleted successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -179,7 +197,55 @@
  *                   type: string
  *                   example: Ticket deleted successfully
  *       404:
- *         description: Ticket not found
+ *         description: Ticket not found.
+ *       403:
+ *         description: Forbidden (admin only).
+ */
+
+/**
+ * @swagger
+ * /api/tickets/verify:
+ *   post:
+ *     summary: Verify a ticket QR code
+ *     description: Allows staff or admins to verify a ticket’s authenticity and mark it as used.
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - qrCode
+ *             properties:
+ *               qrCode:
+ *                 type: string
+ *                 description: The QR code string from the ticket.
+ *                 example: TICKET-550e8400-e29b-41d4-a716-446655440000
+ *     responses:
+ *       200:
+ *         description: Ticket verified successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Ticket is valid and has been checked in.
+ *                 ticket:
+ *                   $ref: '#/components/schemas/Ticket'
+ *       400:
+ *         description: Invalid or expired QR code.
+ *       404:
+ *         description: Ticket not found.
+ *       403:
+ *         description: Unauthorized (staff/admin only).
  */
 
 /**
@@ -210,11 +276,15 @@
  *         checkedInBy:
  *           type: string
  *           format: uuid
- *           example: 123e4567-e89b-12d3-a456-426614174000
+ *           example: 321e4567-e89b-12d3-a456-426614174000
  *         status:
  *           type: string
- *           enum: [USED, UNUSED]
- *           example: UNUSED
+ *           enum: [VALID, USED, CANCELLED, REFUNDED]
+ *           example: VALID
+ *         usedAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2025-10-20T15:00:00.000Z
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -222,7 +292,7 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
- *           example: 2025-10-19T10:00:00.000Z
+ *           example: 2025-10-19T11:00:00.000Z
  *
  *   securitySchemes:
  *     bearerAuth:

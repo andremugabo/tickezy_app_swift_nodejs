@@ -109,10 +109,49 @@ async function deleteTicket(id) {
   return { message: 'Ticket deleted successfully' };
 }
 
+
+/**
+ * Verify QR code data
+ * @param {string} qrData - Raw QR code data string
+ * @param {Object} user - Authenticated staff user performing the scan
+ */
+async function verifyTicket(qrData, user) {
+  // Example QR data format: "event:1234|ticket:abcd"
+  const match = qrData.match(/event:([^|]+)\|ticket:([^|]+)/);
+  if (!match) throw new Error('Invalid QR format');
+
+  const [, eventId, ticketId] = match;
+
+  const ticket = await Ticket.findOne({
+    where: { id: ticketId, eventId },
+    include: [Event, User],
+  });
+
+  if (!ticket) throw new Error('Ticket not found');
+  if (ticket.status === 'USED') throw new Error('Ticket already used');
+  if (ticket.status === 'CANCELLED' || ticket.status === 'REFUNDED')
+    throw new Error(`Ticket is ${ticket.status.toLowerCase()}`);
+
+  // ✅ Mark ticket as used
+  await ticket.update({
+    status: 'USED',
+    usedAt: new Date(),
+    checkedInBy: user.id || user.username,
+  });
+
+  return {
+    message: 'Ticket verified successfully',
+    event: ticket.Event.title,
+    user: ticket.User.name,
+    usedAt: ticket.usedAt,
+  };
+}
+
 module.exports = {
   createTicket,
   getAllTickets,
   getTicketById,
   updateTicketStatus,
   deleteTicket,
+  verifyTicket,
 };

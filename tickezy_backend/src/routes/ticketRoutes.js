@@ -4,26 +4,25 @@ const ticketController = require('../controller/ticketController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 /**
- * Routes for tickets
+ *  Ticket Routes
  */
+
+// Verify ticket QR (staff/admin only)
+router.post('/verify', authenticate, ticketController.verifyTicket);
 
 // Create a ticket (any authenticated user)
 router.post('/', authenticate, ticketController.createTicket);
 
-// Get all tickets
-// Admins see all tickets; regular users see only their own
+// Get all tickets (admins see all, users see only theirs)
 router.get('/', authenticate, ticketController.getAllTickets);
 
-// Get a single ticket by ID
-// Admins can access any; users only their own tickets
+// Get a single ticket by ID (admins or ticket owners)
 router.get('/:id', authenticate, ticketController.getTicketById);
 
-// Update ticket status
-// Ideally, only admins or event staff should be able to update status
+// Update ticket status (admins or staff)
 router.put('/:id/status', authenticate, ticketController.updateTicketStatus);
 
-// Delete ticket
-// Only admins can delete
+// Delete a ticket (admin only)
 router.delete('/:id', authenticate, adminOnly, ticketController.deleteTicket);
 
 module.exports = router;

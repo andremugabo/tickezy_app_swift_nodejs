@@ -69,3 +69,26 @@ exports.deleteTicket = async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 };
+
+/**
+ * Verify ticket QR code (staff or admin)
+ */
+exports.verifyTicket = async (req, res) => {
+  try {
+    const user = req.user;
+
+    // Ensure only staff or admin can scan tickets
+    const allowedRoles = ['ADMIN', 'STAFF'];
+    if (!allowedRoles.includes(user.role?.toUpperCase())) {
+      return res.status(403).json({ message: 'Access denied: Only staff or admin can verify tickets' });
+    }
+
+    const { qrData } = req.body; // raw QR content from scanner
+    if (!qrData) return res.status(400).json({ message: 'QR data is required' });
+
+    const result = await TicketService.verifyTicket(qrData, user);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
