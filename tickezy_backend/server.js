@@ -12,6 +12,7 @@ const setupSwagger = require('./swagger');
 const userRoutes = require('./src/routes/userRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const ticketRoutes = require('./src/routes/ticketRoutes');
+const payments = require('./src/routes/paymentRoutes');
 
 // Middleware
 app.use(express.json());
@@ -29,6 +30,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/payments', payments);
 
 // Swagger
 setupSwagger(app);

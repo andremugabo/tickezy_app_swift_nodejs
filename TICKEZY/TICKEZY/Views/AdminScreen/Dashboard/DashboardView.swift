@@ -14,6 +14,9 @@ struct DashboardView: View {
     @State private var errorMessage: String?
     @State private var showingProfile = false
 
+    // Prevent concurrent loads
+    @State private var loadingInProgress = false
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -21,12 +24,16 @@ struct DashboardView: View {
                 
                 if isLoading {
                     loadingView
+                        .transition(.opacity)
                 } else if let error = errorMessage {
                     errorView(message: error)
+                        .transition(.opacity)
                 } else {
                     mainContent
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
+            .animation(.easeInOut, value: isLoading)
             .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -36,6 +43,7 @@ struct DashboardView: View {
                     } label: {
                         profileButton
                     }
+                    .accessibilityLabel("Open profile")
                 }
             }
             .sheet(isPresented: $showingProfile) {
@@ -55,7 +63,7 @@ struct DashboardView: View {
     // MARK: - Main Content
     
     private var mainContent: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 24) {
                 // Welcome Header
                 welcomeHeader
@@ -80,6 +88,7 @@ struct DashboardView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+        .accessibilityElement(children: .contain)
     }
     
     // MARK: - Welcome Header
@@ -113,6 +122,7 @@ struct DashboardView: View {
                             Circle()
                                 .stroke(Color.brandPrimary.opacity(0.3), lineWidth: 2)
                         )
+                        .accessibilityHidden(true)
                 }
                 
                 // Role Badge
@@ -130,12 +140,15 @@ struct DashboardView: View {
                         .opacity(0.15)
                 )
                 .cornerRadius(8)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Role \(profile.role.rawValue.capitalized)")
             }
         }
         .padding()
         .background(Color.surface)
         .cornerRadius(16)
         .padding(.horizontal)
+        .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Quick Stats Section
@@ -179,6 +192,7 @@ struct DashboardView: View {
                 }
             }
             .padding(.horizontal)
+            .accessibilityElement(children: .contain)
         }
     }
     
@@ -202,6 +216,7 @@ struct DashboardView: View {
                         color: .brandPrimary
                     )
                 }
+                .accessibilityLabel("Manage Users")
                 
                 ActionCard(
                     title: "Manage Events",
@@ -210,6 +225,7 @@ struct DashboardView: View {
                     color: .brandSecondary,
                     isComingSoon: true
                 )
+                .accessibilityLabel("Manage Events, coming soon")
                 
                 ActionCard(
                     title: "Reports",
@@ -218,6 +234,7 @@ struct DashboardView: View {
                     color: .brandAccent,
                     isComingSoon: true
                 )
+                .accessibilityLabel("Reports, coming soon")
             }
             .padding(.horizontal)
         }
@@ -241,6 +258,7 @@ struct DashboardView: View {
                         .font(.subheadline)
                         .foregroundColor(.brandPrimary)
                 }
+                .accessibilityLabel("View all users")
             }
             .padding(.horizontal)
             
@@ -262,6 +280,7 @@ struct DashboardView: View {
                             CompactUserCard(user: user)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("User \(user.name)")
                     }
                 }
                 .padding(.horizontal)
@@ -306,6 +325,7 @@ struct DashboardView: View {
                     .foregroundColor(.brandPrimary)
             }
         }
+        .accessibilityLabel("Open profile")
     }
     
     // MARK: - Loading View
@@ -319,6 +339,7 @@ struct DashboardView: View {
                 .font(.subheadline)
                 .foregroundColor(.textSecondary)
         }
+        .transition(.opacity)
     }
     
     // MARK: - Error View
@@ -352,6 +373,7 @@ struct DashboardView: View {
                     .background(Color.brandPrimary)
                     .cornerRadius(12)
             }
+            .accessibilityLabel("Try again")
         }
         .padding()
     }
@@ -374,13 +396,18 @@ struct DashboardView: View {
     
     @MainActor
     private func loadDashboardData() async {
+        // Prevent overlapping loads
+        guard !loadingInProgress else { return }
+        loadingInProgress = true
+        defer { loadingInProgress = false }
+
         guard let token = auth.token else {
             errorMessage = "User not authenticated"
-            isLoading = false
+            withAnimation { isLoading = false }
             return
         }
 
-        isLoading = true
+        withAnimation { isLoading = true }
         errorMessage = nil
         
         do {
@@ -390,10 +417,11 @@ struct DashboardView: View {
                 try await userService.fetchAllUsers(token: token)
             }
         } catch {
+            // Keep the raw localized description to show backend message where available
             errorMessage = error.localizedDescription
         }
         
-        isLoading = false
+        withAnimation { isLoading = false }
     }
 }
 
@@ -600,6 +628,7 @@ struct ProfileDetailSheet: View {
                         dismiss()
                     }
                     .foregroundColor(.brandPrimary)
+                    .accessibilityLabel("Close profile")
                 }
             }
         }

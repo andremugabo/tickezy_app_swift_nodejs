@@ -1,4 +1,3 @@
-// src/services/eventService.js
 const { Event, User } = require('../models');
 const { Op } = require('sequelize');
 const fs = require('fs');
