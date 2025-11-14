@@ -6,7 +6,7 @@
  * Fully compatible with Stripe, Apple Pay, or any custom payment processor.
  */
 
-const { Payment, Ticket, User, Event } = require('../models');
+const { Payment, Ticket, User, Event, Notification } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
 
@@ -94,6 +94,19 @@ async function updatePaymentStatus(paymentId, status) {
       { status: 'VALID' },
       { where: { id: payment.ticketId } }
     );
+
+    // Create notification for payment success
+    try {
+      await Notification.create({
+        userId: payment.userId,
+        title: 'Payment Successful',
+        message: `Your payment of ${payment.amount} for ${payment.Event?.title || 'your ticket'} was successful.`,
+        type: 'PAYMENT_SUCCESS',
+        timestamp: new Date(),
+        relatedEventId: payment.eventId,
+        relatedTicketId: payment.ticketId,
+      });
+    } catch (_) {}
   } else if (status.toUpperCase() === 'REFUNDED') {
     await Ticket.update(
       { status: 'REFUNDED' },

@@ -1,7 +1,14 @@
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
 const bcrypt = require('bcrypt');
-const { User } = require('../models');
+const { User, Notification } = require('../models');
+
+/**
+ * 🧩 Helper: Wrap async route handlers
+ */
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
 
 /**
  * 📦 Validation Schemas
@@ -11,7 +18,7 @@ const registerSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
   phoneNumber: Joi.string().optional(),
-  role: Joi.string().valid('ADMIN', 'CUSTOMER').optional(), // optional for admin creation
+  role: Joi.string().valid('ADMIN', 'CUSTOMER').optional(),
 });
 
 const loginSchema = Joi.object({
@@ -30,140 +37,196 @@ const generateToken = (user) =>
   );
 
 /**
- * 🧍 Register a new user
+ * 🧍 Register a New User
  */
-exports.register = async (req, res) => {
-  try {
-    const { error, value } = registerSchema.validate(req.body, { abortEarly: false });
-    if (error)
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        details: error.details.map((d) => d.message),
-      });
-
-    const { name, email, password, phoneNumber, role } = value;
-    const normalizedEmail = email.trim().toLowerCase();
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email: normalizedEmail } });
-    if (existingUser)
-      return res.status(400).json({ success: false, message: 'Email already registered' });
-
-    // Create user
-    const user = await User.create({
-      name,
-      email: normalizedEmail,
-      password,
-      phoneNumber,
-      role: role || 'CUSTOMER',
+exports.register = asyncHandler(async (req, res) => {
+  const { error, value } = registerSchema.validate(req.body, { abortEarly: false });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      details: error.details.map((d) => d.message),
     });
-
-    const token = generateToken(user);
-
-    return res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      token,
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    console.error('❌ Register error:', err);
-    res.status(500).json({ success: false, message: 'Server error during registration' });
   }
-};
+
+  const { name, email, password, phoneNumber, role } = value;
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existingUser = await User.findOne({ where: { email: normalizedEmail } });
+  if (existingUser) {
+    return res.status(400).json({ success: false, message: 'Email already registered' });
+  }
+
+  const user = await User.create({
+    name,
+    email: normalizedEmail,
+    password,
+    phoneNumber,
+    role: role || 'CUSTOMER',
+  });
+
+  const token = generateToken(user);
+
+  res.status(201).json({
+    success: true,
+    message: 'User registered successfully',
+    token,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
 
 /**
- * 🔐 Login an existing user
+ * 🔐 Login Existing User
  */
-exports.login = async (req, res) => {
-  try {
-    const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
-    if (error)
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        details: error.details.map((d) => d.message),
-      });
-
-    const { email, password } = value;
-    const normalizedEmail = email.trim().toLowerCase();
-
-    // Find user
-    const user = await User.findOne({ where: { email: normalizedEmail } });
-    if (!user)
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-
-    // Compare password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword)
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-
-    // Update last login timestamp
-    user.lastLoginAt = new Date();
-    await user.save();
-
-    const token = generateToken(user);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      token,
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+exports.login = asyncHandler(async (req, res) => {
+  const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      details: error.details.map((d) => d.message),
     });
-  } catch (err) {
-    console.error('❌ Login error:', err);
-    res.status(500).json({ success: false, message: 'Server error during login' });
   }
-};
+
+  const { email, password } = value;
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await User.findOne({ where: { email: normalizedEmail } });
+  if (!user) throw new Error('Invalid email or password');
+
+  const validPassword = await bcrypt.compare(password, user.password);
+  if (!validPassword) throw new Error('Invalid email or password');
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  const token = generateToken(user);
+
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    token,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
 
 /**
- * 👤 Get logged-in user's profile
+ * 👤 Get Logged-in User Profile
  */
-exports.getProfile = async (req, res) => {
-  try {
-    const user = req.user; // Populated by authMiddleware
+exports.getProfile = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user) throw new Error('User not found');
 
-    if (!user)
-      return res.status(404).json({ success: false, message: 'User not found' });
+  res.status(200).json({
+    success: true,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phoneNumber: user.phoneNumber,
+      createdAt: user.createdAt,
+    },
+  });
+});
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phoneNumber: user.phoneNumber,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (err) {
-    console.error('❌ Get profile error:', err);
-    res.status(500).json({ success: false, message: 'Server error retrieving profile' });
-  }
-};
+/**
+ * 📝 Update Logged-in User Profile
+ */
+exports.updateProfile = asyncHandler(async (req, res) => {
+  const { name, phoneNumber } = req.body;
 
+  const user = await User.findByPk(req.user.id);
+  if (!user) throw new Error('User not found');
 
-exports.getAllUsers = async (req, res) => {
-    try {
-      const users = await User.findAll({
-        attributes: { exclude: ['password'] } 
-      });
-      res.status(200).json({ success: true, data: users });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: 'Server error fetching users' });
-    }
-  };
-  
+  if (name) user.name = name;
+  if (phoneNumber) user.phoneNumber = phoneNumber;
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile updated successfully',
+    data: user,
+  });
+});
+
+/**
+ * 🔔 Update FCM Device Token
+ */
+exports.updateFcmToken = asyncHandler(async (req, res) => {
+  const { fcmToken } = req.body;
+  if (!fcmToken) throw new Error('FCM token is required');
+
+  const user = await User.findByPk(req.user.id);
+  user.fcmToken = fcmToken;
+  await user.save();
+
+  res.status(200).json({ success: true, message: 'Device token updated successfully' });
+});
+
+/**
+ * 👥 Get All Users (Admin)
+ */
+exports.getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.findAll({ attributes: { exclude: ['password'] } });
+  res.status(200).json({ success: true, data: users });
+});
+
+/**
+ * 🔔 Get All Notifications
+ */
+exports.getNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.findAll({
+    where: { userId: req.user.id },
+    order: [['createdAt', 'DESC']],
+  });
+
+  res.status(200).json({ success: true, data: notifications });
+});
+
+/**
+ * ✅ Mark Single Notification as Read
+ */
+exports.markNotificationRead = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const notif = await Notification.findByPk(id);
+
+  if (!notif || notif.userId !== req.user.id) throw new Error('Notification not found');
+
+  notif.isRead = true;
+  await notif.save();
+
+  res.status(200).json({ success: true, message: 'Notification marked as read' });
+});
+
+/**
+ * 🔔 Mark All Notifications as Read
+ */
+exports.markAllNotificationsRead = asyncHandler(async (req, res) => {
+  await Notification.update({ isRead: true }, { where: { userId: req.user.id } });
+  res.status(200).json({ success: true, message: 'All notifications marked as read' });
+});
+
+/**
+ * 🗑️ Delete a Single Notification
+ */
+exports.deleteNotification = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const notif = await Notification.findByPk(id);
+
+  if (!notif || notif.userId !== req.user.id) throw new Error('Notification not found');
+
+  await notif.destroy();
+  res.status(200).json({ success: true, message: 'Notification deleted' });
+});

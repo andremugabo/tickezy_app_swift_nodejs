@@ -69,7 +69,7 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 event:
+ *                 data:
  *                   $ref: '#/components/schemas/Event'
  *       400:
  *         description: Invalid input or unauthorized access
@@ -142,7 +142,7 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 event:
+ *                 data:
  *                   $ref: '#/components/schemas/Event'
  *       400:
  *         description: Invalid input or unauthorized access
@@ -152,9 +152,8 @@
  * @swagger
  * /api/events:
  *   get:
- *     summary: Get all events (no filters)
+ *     summary: Get all events with optional filters and pagination
  *     tags: [Events]
- *     description: Retrieve all events without applying any filters. Pagination is supported with page and limit.
  *     parameters:
  *       - name: page
  *         in: query
@@ -172,6 +171,32 @@
  *           type: integer
  *           default: 10
  *           minimum: 1
+ *       - name: category
+ *         in: query
+ *         required: false
+ *         description: Filter events by category
+ *         schema:
+ *           type: string
+ *           enum: [CONCERT, SPORTS, CONFERENCE, THEATER, OTHER]
+ *       - name: status
+ *         in: query
+ *         required: false
+ *         description: Filter events by status
+ *         schema:
+ *           type: string
+ *           enum: [UPCOMING, ONGOING, COMPLETED, CANCELLED]
+ *       - name: isPublished
+ *         in: query
+ *         required: false
+ *         description: Filter events by published status
+ *         schema:
+ *           type: boolean
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Search events by title
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: List of all events retrieved successfully with pagination
@@ -204,8 +229,6 @@
  *                       example: 10
  */
 
-
-
 /**
  * @swagger
  * /api/events/{id}:
@@ -230,7 +253,7 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 event:
+ *                 data:
  *                   $ref: '#/components/schemas/Event'
  *       404:
  *         description: Event not found

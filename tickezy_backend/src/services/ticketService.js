@@ -1,4 +1,4 @@
-const { Ticket, Event, User } = require('../models');
+const { Ticket, Event, User, Notification } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
 
@@ -33,6 +33,19 @@ async function createTicket({ userId, eventId, quantity = 1, checkedInBy }) {
 
   event.ticketsSold += quantity;
   await event.save();
+
+  // Create notification for user
+  try {
+    await Notification.create({
+      userId,
+      title: 'Ticket Confirmed',
+      message: `Your ticket for ${event.title} is confirmed. Quantity: ${quantity}.`,
+      type: 'TICKET_CONFIRMATION',
+      timestamp: new Date(),
+      relatedEventId: eventId,
+      relatedTicketId: ticket.id,
+    });
+  } catch (_) {}
 
   return ticket;
 }

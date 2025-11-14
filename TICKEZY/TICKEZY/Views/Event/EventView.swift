@@ -1,10 +1,3 @@
-//
-//  EventView.swift
-//  TICKEZY
-//
-//  Created by M.A on 10/15/25.
-//
-
 import SwiftUI
 
 struct EventView: View {
@@ -44,6 +37,8 @@ struct EventView: View {
                         Image(systemName: hasActiveFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                             .foregroundColor(.brandPrimary)
                     }
+                    .accessibilityLabel("Filter events")
+                    .accessibilityHint("Open filter options")
                 }
             }
             .sheet(isPresented: $showFilters) {
@@ -52,12 +47,12 @@ struct EventView: View {
             .task {
                 await viewModel.fetchEvents()
             }
-            .alert(isPresented: $viewModel.showError) {
-                Alert(
-                    title: Text("Error"),
-                    message: Text(viewModel.errorMessage),
-                    dismissButton: .default(Text("OK"))
-                )
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK") {
+                    viewModel.clearError()
+                }
+            } message: {
+                Text(viewModel.errorMessage ?? "Unknown error")
             }
         }
     }
@@ -73,18 +68,17 @@ struct EventView: View {
                 TextField("Search events...", text: $viewModel.searchText)
                     .foregroundColor(.textPrimary)
                     .submitLabel(.search)
-                    .onSubmit {
-                        Task { await viewModel.fetchEvents() }
-                    }
+                    .accessibilityLabel("Search events")
+                    .accessibilityHint("Enter event name or keyword")
                 
                 if !viewModel.searchText.isEmpty {
                     Button {
                         viewModel.searchText = ""
-                        Task { await viewModel.fetchEvents() }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.textTertiary)
                     }
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(12)
@@ -92,14 +86,18 @@ struct EventView: View {
             .cornerRadius(12)
             
             Button {
-                Task { await viewModel.fetchEvents() }
+                Task { await viewModel.refresh() }
             } label: {
                 Image(systemName: "arrow.clockwise")
                     .foregroundColor(.brandPrimary)
                     .frame(width: 44, height: 44)
                     .background(Color.surface)
                     .cornerRadius(12)
+                    .rotationEffect(.degrees(viewModel.isLoading ? 360 : 0))
+                    .animation(viewModel.isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: viewModel.isLoading)
             }
+            .disabled(viewModel.isLoading)
+            .accessibilityLabel("Refresh events")
         }
     }
     
@@ -111,22 +109,18 @@ struct EventView: View {
                 if let category = viewModel.selectedCategory {
                     FilterPill(text: category.rawValue, icon: "tag.fill") {
                         viewModel.selectedCategory = nil
-                        Task { await viewModel.fetchEvents() }
                     }
                 }
                 
                 if let status = viewModel.selectedStatus {
                     FilterPill(text: status.rawValue, icon: "clock.fill") {
                         viewModel.selectedStatus = nil
-                        Task { await viewModel.fetchEvents() }
                     }
                 }
                 
                 if hasActiveFilters {
                     Button {
-                        viewModel.selectedCategory = nil
-                        viewModel.selectedStatus = nil
-                        Task { await viewModel.fetchEvents() }
+                        viewModel.clearFilters()
                     } label: {
                         Text("Clear All")
                             .font(.caption.bold())
@@ -145,37 +139,79 @@ struct EventView: View {
     
     private var eventListSection: some View {
         Group {
-            if viewModel.events.isEmpty {
+            if viewModel.isLoading && viewModel.events.isEmpty {
+                loadingView
+            } else if viewModel.events.isEmpty {
                 emptyStateView
             } else {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         ForEach(viewModel.events) { event in
                             EventCardView(event: event)
+                                .onAppear {
+                                    // Load more when reaching last item
+                                    if event.id == viewModel.events.last?.id {
+                                        Task {
+                                            await viewModel.loadNextPage()
+                                        }
+                                    }
+                                }
+                        }
+                        
+                        // Pagination loader
+                        if viewModel.isLoading && !viewModel.events.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
+                            }
+                        }
+                        
+                        // End of results message
+                        if !viewModel.hasMorePages && viewModel.events.count > 0 {
+                            Text("No more events")
+                                .font(.caption)
+                                .foregroundColor(.textTertiary)
+                                .padding()
                         }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
                 }
+                .refreshable {
+                    await viewModel.refresh()
+                }
             }
         }
+    }
+    
+    // MARK: - Loading View
+    
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Loading events...")
+                .font(.subheadline)
+                .foregroundColor(.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Empty State View
     
     private var emptyStateView: some View {
         VStack(spacing: 20) {
-            Image(systemName: viewModel.searchText.isEmpty ? "calendar.badge.exclamationmark" : "magnifyingglass")
+            Image(systemName: emptyStateIcon)
                 .font(.system(size: 60))
                 .foregroundColor(.textTertiary)
             
-            Text(viewModel.searchText.isEmpty ? "No Events Available" : "No Events Found")
+            Text(emptyStateTitle)
                 .font(.title2.bold())
                 .foregroundColor(.textPrimary)
             
-            Text(viewModel.searchText.isEmpty ?
-                 "Check back later for upcoming events" :
-                 "Try adjusting your search or filters")
+            Text(emptyStateMessage)
                 .font(.subheadline)
                 .foregroundColor(.textSecondary)
                 .multilineTextAlignment(.center)
@@ -183,19 +219,53 @@ struct EventView: View {
             
             if hasActiveFilters {
                 Button {
-                    viewModel.searchText = ""
-                    viewModel.selectedCategory = nil
-                    viewModel.selectedStatus = nil
-                    Task { await viewModel.fetchEvents() }
+                    viewModel.clearFilters()
                 } label: {
-                    Text("Clear Filters")
-                        .font(.headline)
-                        .foregroundColor(.brandPrimary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("Clear Filters")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.brandPrimary)
+                    .cornerRadius(12)
                 }
                 .padding(.top, 8)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var emptyStateIcon: String {
+        if !viewModel.searchText.isEmpty {
+            return "magnifyingglass"
+        } else if hasActiveFilters {
+            return "line.3.horizontal.decrease.circle"
+        } else {
+            return "calendar.badge.exclamationmark"
+        }
+    }
+    
+    private var emptyStateTitle: String {
+        if !viewModel.searchText.isEmpty {
+            return "No Events Found"
+        } else if hasActiveFilters {
+            return "No Matching Events"
+        } else {
+            return "No Events Available"
+        }
+    }
+    
+    private var emptyStateMessage: String {
+        if !viewModel.searchText.isEmpty {
+            return "Try searching with different keywords"
+        } else if hasActiveFilters {
+            return "Try adjusting your filters to see more events"
+        } else {
+            return "Check back later for upcoming events"
+        }
     }
     
     // MARK: - Filter Sheet
@@ -211,7 +281,6 @@ struct EventView: View {
                             isSelected: viewModel.selectedCategory == category
                         ) {
                             viewModel.selectedCategory = category
-                            Task { await viewModel.fetchEvents() }
                             showFilters = false
                         }
                     }
@@ -221,7 +290,6 @@ struct EventView: View {
                         isSelected: viewModel.selectedCategory == nil
                     ) {
                         viewModel.selectedCategory = nil
-                        Task { await viewModel.fetchEvents() }
                         showFilters = false
                     }
                 }
@@ -234,7 +302,6 @@ struct EventView: View {
                             isSelected: viewModel.selectedStatus == status
                         ) {
                             viewModel.selectedStatus = status
-                            Task { await viewModel.fetchEvents() }
                             showFilters = false
                         }
                     }
@@ -244,7 +311,6 @@ struct EventView: View {
                         isSelected: viewModel.selectedStatus == nil
                     ) {
                         viewModel.selectedStatus = nil
-                        Task { await viewModel.fetchEvents() }
                         showFilters = false
                     }
                 }
@@ -252,6 +318,14 @@ struct EventView: View {
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Clear All") {
+                        viewModel.clearFilters()
+                        showFilters = false
+                    }
+                    .foregroundColor(.stateError)
+                }
+                
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         showFilters = false
@@ -377,6 +451,7 @@ struct EventCardView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color.border, lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -387,7 +462,10 @@ struct EventCardView: View {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
-                        imagePlaceholder
+                        ZStack {
+                            Color.surfaceAlt
+                            ProgressView()
+                        }
                     case .success(let image):
                         image
                             .resizable()
@@ -396,6 +474,15 @@ struct EventCardView: View {
                             .clipped()
                     case .failure:
                         imagePlaceholder
+                            .overlay(
+                                VStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.title3)
+                                    Text("Failed to load")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.textTertiary)
+                            )
                     @unknown default:
                         imagePlaceholder
                     }
@@ -523,23 +610,47 @@ struct EventDetailView: View {
                 if let url = event.fullImageURL {
                     AsyncImage(url: url) { phase in
                         switch phase {
+                        case .empty:
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.surfaceAlt)
+                                ProgressView()
+                            }
+                            .frame(height: 250)
                         case .success(let image):
                             image
                                 .resizable()
                                 .scaledToFill()
                                 .frame(height: 250)
                                 .clipped()
-                        default:
+                        case .failure:
                             Rectangle()
                                 .fill(Color.brandGradient.opacity(0.3))
                                 .frame(height: 250)
                                 .overlay(
-                                    Image(systemName: "photo.fill")
-                                        .font(.system(size: 50))
-                                        .foregroundColor(.white.opacity(0.5))
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle")
+                                            .font(.title)
+                                        Text("Failed to load image")
+                                            .font(.caption)
+                                    }
+                                    .foregroundColor(.white.opacity(0.7))
                                 )
+                        @unknown default:
+                            Rectangle()
+                                .fill(Color.brandGradient.opacity(0.3))
+                                .frame(height: 250)
                         }
                     }
+                } else {
+                    Rectangle()
+                        .fill(Color.brandGradient.opacity(0.3))
+                        .frame(height: 250)
+                        .overlay(
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.white.opacity(0.5))
+                        )
                 }
                 
                 VStack(alignment: .leading, spacing: 16) {
@@ -691,6 +802,10 @@ struct TicketPurchaseView: View {
     let event: Event
     @Environment(\.dismiss) var dismiss
     @State private var quantity = 1
+    @State private var isProcessing = false
+    @State private var showError = false
+    @State private var errorMessage = ""
+    @State private var showSuccess = false
     
     var totalPrice: Double {
         Double(quantity) * event.price
@@ -735,7 +850,9 @@ struct TicketPurchaseView: View {
                         HStack(spacing: 20) {
                             Button {
                                 if quantity > 1 {
-                                    quantity -= 1
+                                    withAnimation(.spring(response: 0.3)) {
+                                        quantity -= 1
+                                    }
                                 }
                             } label: {
                                 Image(systemName: "minus.circle.fill")
@@ -748,19 +865,27 @@ struct TicketPurchaseView: View {
                                 .font(.title.bold())
                                 .foregroundColor(.textPrimary)
                                 .frame(minWidth: 50)
+                                .contentTransition(.numericText())
                             
                             Button {
-                                if quantity < event.availableTickets {
-                                    quantity += 1
+                                if quantity < min(event.availableTickets, 10) {
+                                    withAnimation(.spring(response: 0.3)) {
+                                        quantity += 1
+                                    }
                                 }
                             } label: {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.title2)
-                                    .foregroundColor(quantity < event.availableTickets ? .brandPrimary : .textTertiary)
+                                    .foregroundColor(quantity < min(event.availableTickets, 10) ? .brandPrimary : .textTertiary)
                             }
-                            .disabled(quantity >= event.availableTickets)
+                            .disabled(quantity >= min(event.availableTickets, 10))
                         }
                         .frame(maxWidth: .infinity)
+                        
+                        Text("Maximum 10 tickets per purchase")
+                            .font(.caption)
+                            .foregroundColor(.textTertiary)
+                            .frame(maxWidth: .infinity)
                     }
                     .padding()
                     .background(Color.surface)
@@ -811,16 +936,23 @@ struct TicketPurchaseView: View {
                         dismiss()
                     }
                     .foregroundColor(.textSecondary)
+                    .disabled(isProcessing)
                 }
             }
             .safeAreaInset(edge: .bottom) {
                 Button {
-                    // Handle purchase
-                    dismiss()
+                    Task {
+                        await purchaseTicket()
+                    }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "cart.fill")
-                        Text("Confirm Purchase")
+                        if isProcessing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "cart.fill")
+                        }
+                        Text(isProcessing ? "Processing..." : "Confirm Purchase")
                             .fontWeight(.semibold)
                     }
                     .foregroundColor(.white)
@@ -835,11 +967,53 @@ struct TicketPurchaseView: View {
                     )
                     .cornerRadius(16)
                     .shadow(color: .brandPrimary.opacity(0.4), radius: 12, x: 0, y: 8)
+                    .opacity(isProcessing ? 0.7 : 1.0)
                 }
+                .disabled(isProcessing)
                 .padding()
                 .background(Color.backgroundPrimary)
             }
+            .alert("Error", isPresented: $showError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
+            }
+            .alert("Success!", isPresented: $showSuccess) {
+                Button("View My Tickets") {
+                    // Navigate to tickets view
+                    dismiss()
+                }
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Successfully purchased \(quantity) ticket\(quantity > 1 ? "s" : "") for \(event.title)")
+            }
         }
+    }
+    
+    private func purchaseTicket() async {
+        guard let token = AuthService.shared.token else {
+            errorMessage = "Please login to purchase tickets"
+            showError = true
+            return
+        }
+        
+        isProcessing = true
+        
+        do {
+            try await TicketService.shared.purchaseTicket(
+                eventId: event.id,
+                quantity: quantity,
+                token: token
+            )
+            showSuccess = true
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+        }
+        
+        isProcessing = false
     }
 }
 

@@ -21,6 +21,8 @@ router.get('/:id', authenticate, ticketController.getTicketById);
 
 // Update ticket status (admins or staff)
 router.put('/:id/status', authenticate, ticketController.updateTicketStatus);
+// Alias to support iOS client calling PUT /tickets/:id
+router.put('/:id', authenticate, ticketController.updateTicketStatus);
 
 // Delete a ticket (admin only)
 router.delete('/:id', authenticate, adminOnly, ticketController.deleteTicket);

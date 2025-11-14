@@ -37,8 +37,8 @@ const resizeEventImage = async (req, res, next) => {
     const filepath = path.join(uploadDir, filename);
 
     await sharp(req.file.buffer)
-      .resize(800)          // width 800px, auto height
-      .jpeg({ quality: 80 }) // compress JPEG
+      .resize(800)            // width 800px, auto height
+      .jpeg({ quality: 80 })  // compress JPEG
       .toFile(filepath);
 
     req.file.filename = filename; // pass filename to controller
@@ -58,13 +58,13 @@ router.post('/', authenticate, upload.single('image'), resizeEventImage, eventCo
 // Update event (Admin only)
 router.put('/:id', authenticate, upload.single('image'), resizeEventImage, eventController.updateEvent);
 
-// Get all events (Public)
-router.get('/', eventController.getAllEvents);
+// Delete event (Admin only)
+router.delete('/:id', authenticate, eventController.deleteEvent);
 
 // Get event by ID (Public)
 router.get('/:id', eventController.getEventById);
 
-// Delete event (Admin only)
-router.delete('/:id', authenticate, eventController.deleteEvent);
+// Get all events (Public)
+router.get('/', eventController.getAllEvents);
 
 module.exports = router;

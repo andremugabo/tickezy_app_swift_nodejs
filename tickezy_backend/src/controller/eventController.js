@@ -16,8 +16,8 @@ const processEventImage = async (file) => {
   const filepath = path.join(uploadDir, filename);
 
   await sharp(file.buffer)
-    .resize(800) // width 800px, auto height
-    .jpeg({ quality: 80 }) // compress JPEG
+    .resize(800)
+    .jpeg({ quality: 80 })
     .toFile(filepath);
 
   return `/uploads/events/${filename}`;
@@ -29,18 +29,18 @@ const processEventImage = async (file) => {
 const createEvent = async (req, res) => {
   try {
     const adminId = req.user.id;
-    const event = await eventService.createEvent(req.body, adminId, req.file);
+    const imageURL = await processEventImage(req.file);
+    const eventData = { ...req.body };
+    if (imageURL) eventData.imageURL = imageURL;
 
-    res.status(201).json({
-      success: true,
-      message: 'Event created successfully',
-      data: event,
-    });
+    const event = await eventService.createEvent(eventData, adminId);
+
+    res.status(201).json({ success: true, message: 'Event created successfully', data: event });
   } catch (error) {
+    console.error('Create Event Error:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
 
 /**
  * Update Event (Admin only)
@@ -56,13 +56,24 @@ const updateEvent = async (req, res) => {
 
     const updatedEvent = await eventService.updateEvent(eventId, updates, adminId);
 
-    res.status(200).json({
-      success: true,
-      message: 'Event updated successfully',
-      data: updatedEvent,
-    });
+    res.status(200).json({ success: true, message: 'Event updated successfully', data: updatedEvent });
   } catch (error) {
     console.error('Update Event Error:', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Delete Event (Admin only)
+ */
+const deleteEvent = async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const eventId = req.params.id;
+    await eventService.deleteEvent(eventId, adminId);
+    res.status(200).json({ success: true, message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Delete Event Error:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
@@ -72,16 +83,11 @@ const updateEvent = async (req, res) => {
  */
 const getAllEvents = async (req, res) => {
   try {
-    // Read filters, page, and limit from query
     const { page = 1, limit = 10, category, status, isPublished, search } = req.query;
-
     const filters = { category, status, isPublished, search };
-
-    // Convert page and limit to numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
-    // Fetch events with pagination
     const result = await eventService.getAllEvents(filters, pageNum, limitNum);
 
     res.status(200).json({
@@ -95,44 +101,23 @@ const getAllEvents = async (req, res) => {
   }
 };
 
-
 /**
- * Get single event (public)
+ * Get single event by ID (public)
  */
 const getEventById = async (req, res) => {
   try {
     const event = await eventService.getEventById(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: event,
-    });
+    res.status(200).json({ success: true, data: event });
   } catch (error) {
     console.error('Get Event Error:', error);
     res.status(404).json({ success: false, message: error.message });
   }
 };
 
-/**
- * Delete event (Admin only)
- */
-const deleteEvent = async (req, res) => {
-  try {
-    const adminId = req.user.id;
-    const result = await eventService.deleteEvent(req.params.id, adminId);
-    res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    console.error('Delete Event Error:', error);
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
 module.exports = {
   createEvent,
   updateEvent,
+  deleteEvent,
   getAllEvents,
   getEventById,
-  deleteEvent,
 };

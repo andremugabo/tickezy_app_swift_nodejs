@@ -22,19 +22,18 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('ADMIN', 'CUSTOMER','STAFF'),
+    type: DataTypes.ENUM('ADMIN', 'CUSTOMER', 'STAFF'),
     defaultValue: 'CUSTOMER',
   },
-  isActive: {  
+  isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
   lastLoginAt: DataTypes.DATE,
   phoneNumber: DataTypes.STRING,
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
+  // Optional profile fields
+  fcmToken: DataTypes.STRING,
+  profileImageURL: DataTypes.STRING,
 }, {
   timestamps: true,
   hooks: {

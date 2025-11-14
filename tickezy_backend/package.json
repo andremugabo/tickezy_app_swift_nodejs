@@ -28,7 +28,7 @@
     "qrcode": "^1.5.4",
     "sequelize": "^6.37.7",
     "sharp": "^0.34.4",
-    "swagger-jsdoc": "^3.7.0",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0"
   }
