@@ -54,12 +54,13 @@ async function createTicket({ userId, eventId, quantity = 1, checkedInBy }) {
  * Get all tickets
  * @param {Object} user - authenticated user object
  */
-async function getAllTickets(user) {
+async function getAllTickets(user, userIdFilter) {
   const query = { include: [Event, User] };
 
-  // Non-admin users see only their tickets
   if (user.role?.toUpperCase() !== 'ADMIN') {
     query.where = { userId: user.id };
+  } else if (userIdFilter) {
+    query.where = { userId: userIdFilter };
   }
 
   return await Ticket.findAll(query);

@@ -10,12 +10,23 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var userService = UserService.shared
+    @StateObject private var ticketService = TicketService.shared
+    @StateObject private var eventService = EventService.shared
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showingProfile = false
 
     // Prevent concurrent loads
     @State private var loadingInProgress = false
+    
+    // Stats for non-admin
+    @State private var myEventsCount: Int = 0
+    @State private var myTicketsCount: Int = 0
+    
+    // Admin stats
+    @State private var totalEvents: Int = 0
+    @State private var totalTicketsSold: Int = 0
+    @State private var totalRevenue: Double = 0.0
 
     var body: some View {
         NavigationStack {
@@ -70,7 +81,11 @@ struct DashboardView: View {
                 
                 // Quick Stats
                 if let profile = userService.currentUserProfile {
-                    quickStatsSection(profile: profile)
+                    if auth.currentUser?.role == .ADMIN {
+                        adminQuickStatsSection
+                    } else {
+                        quickStatsSection(profile: profile)
+                    }
                 }
                 
                 // Admin Actions
@@ -163,29 +178,36 @@ struct DashboardView: View {
             HStack(spacing: 12) {
                 if auth.currentUser?.role == .ADMIN {
                     StatCard(
-                        title: "Total Users",
-                        value: "\(userService.allUsers.count)",
-                        icon: "person.2.fill",
+                        title: "Total Events",
+                        value: "\(totalEvents)",
+                        icon: "calendar",
                         color: .brandPrimary
                     )
                     
                     StatCard(
-                        title: "Admins",
-                        value: "\(userService.allUsers.filter { $0.role == .ADMIN }.count)",
-                        icon: "crown.fill",
+                        title: "Tickets Sold",
+                        value: "\(totalTicketsSold)",
+                        icon: "ticket.fill",
                         color: .brandAccent
+                    )
+                    
+                    StatCard(
+                        title: "Revenue",
+                        value: compactCurrency(totalRevenue),
+                        icon: "dollarsign.circle.fill",
+                        color: .stateSuccess
                     )
                 } else {
                     StatCard(
                         title: "My Events",
-                        value: "0",
+                        value: "\(myEventsCount)",
                         icon: "calendar",
                         color: .brandPrimary
                     )
                     
                     StatCard(
                         title: "My Tickets",
-                        value: "0",
+                        value: "\(myTicketsCount)",
                         icon: "ticket.fill",
                         color: .brandAccent
                     )
@@ -196,6 +218,40 @@ struct DashboardView: View {
         }
     }
     
+    // MARK: - Admin Quick Stats Section
+    private var adminQuickStatsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Stats")
+                .font(.headline)
+                .foregroundColor(.textPrimary)
+                .padding(.horizontal)
+            
+            HStack(spacing: 12) {
+                StatCard(
+                    title: "Total Events",
+                    value: "\(totalEvents)",
+                    icon: "calendar",
+                    color: .brandPrimary
+                )
+                
+                StatCard(
+                    title: "Tickets Sold",
+                    value: "\(totalTicketsSold)",
+                    icon: "ticket.fill",
+                    color: .brandAccent
+                )
+                
+                StatCard(
+                    title: "Revenue",
+                    value: compactCurrency(totalRevenue),
+                    icon: "dollarsign.circle.fill",
+                    color: .stateSuccess
+                )
+            }
+            .padding(.horizontal)
+        }
+    }
+
     // MARK: - Admin Actions Section
     
     private var adminActionsSection: some View {
@@ -218,23 +274,29 @@ struct DashboardView: View {
                 }
                 .accessibilityLabel("Manage Users")
                 
-                ActionCard(
-                    title: "Manage Events",
-                    subtitle: "Create and edit events",
-                    icon: "calendar.badge.plus",
-                    color: .brandSecondary,
-                    isComingSoon: true
-                )
-                .accessibilityLabel("Manage Events, coming soon")
+                NavigationLink {
+                    EventManagement()
+                } label: {
+                    ActionCard(
+                        title: "Manage Events",
+                        subtitle: "Create and edit events",
+                        icon: "calendar.badge.plus",
+                        color: .brandSecondary
+                    )
+                }
+                .accessibilityLabel("Manage Events")
                 
-                ActionCard(
-                    title: "Reports",
-                    subtitle: "View analytics and reports",
-                    icon: "chart.bar.fill",
-                    color: .brandAccent,
-                    isComingSoon: true
-                )
-                .accessibilityLabel("Reports, coming soon")
+                NavigationLink {
+                    ReportsView()
+                } label: {
+                    ActionCard(
+                        title: "Reports",
+                        subtitle: "View analytics and reports",
+                        icon: "chart.bar.fill",
+                        color: .brandAccent
+                    )
+                }
+                .accessibilityLabel("Reports")
             }
             .padding(.horizontal)
         }
@@ -292,17 +354,38 @@ struct DashboardView: View {
     
     private var userActivitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .foregroundColor(.textPrimary)
-                .padding(.horizontal)
+            HStack {
+                Text("Recent Activity")
+                    .font(.headline)
+                    .foregroundColor(.textPrimary)
+                Spacer()
+                NavigationLink {
+                    RecentActivityView()
+                } label: {
+                    Text("View All")
+                        .font(.subheadline)
+                        .foregroundColor(.brandPrimary)
+                }
+            }
+            .padding(.horizontal)
             
             VStack(spacing: 12) {
-                EmptyActivityCard(
-                    icon: "calendar.badge.clock",
-                    title: "No Recent Activity",
-                    subtitle: "Your recent activity will appear here"
-                )
+                if ticketService.tickets.isEmpty {
+                    EmptyActivityCard(
+                        icon: "calendar.badge.clock",
+                        title: "No Recent Activity",
+                        subtitle: "Your recent activity will appear here"
+                    )
+                } else {
+                    ForEach(ticketService.tickets.prefix(5)) { ticket in
+                        NavigationLink {
+                            TicketDetailView(ticket: ticket)
+                        } label: {
+                            RecentTicketRow(ticket: ticket)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
             }
             .padding(.horizontal)
         }
@@ -415,6 +498,11 @@ struct DashboardView: View {
 
             if auth.currentUser?.role == .ADMIN {
                 try await userService.fetchAllUsers(token: token)
+                await eventService.fetchEvents(limit: 100)
+                computeAdminStats()
+            } else {
+                await ticketService.fetchMyTickets(token: token)
+                computeUserStats()
             }
         } catch {
             // Keep the raw localized description to show backend message where available
@@ -422,6 +510,151 @@ struct DashboardView: View {
         }
         
         withAnimation { isLoading = false }
+    }
+    // MARK: - Compute User Stats
+    private func computeUserStats() {
+        let tickets = ticketService.tickets
+        myTicketsCount = tickets.count
+        myEventsCount = Set(tickets.map { $0.eventId }).count
+    }
+    private func computeAdminStats() {
+        let events = eventService.events
+        totalEvents = events.count
+        totalTicketsSold = events.reduce(0) { $0 + $1.ticketsSold }
+        totalRevenue = events.reduce(0.0) { $0 + (Double($1.ticketsSold) * $1.price) }
+    }
+    
+    private func compactCurrency(_ value: Double) -> String {
+        let absValue = abs(value)
+        let sign = value < 0 ? "-" : ""
+        let formatted: String
+        switch absValue {
+        case 1_000_000_000...:
+            formatted = String(format: "%.1fB", absValue / 1_000_000_000)
+        case 1_000_000...:
+            formatted = String(format: "%.1fM", absValue / 1_000_000)
+        case 1_000...:
+            formatted = String(format: "%.1fK", absValue / 1_000)
+        default:
+            formatted = String(format: "%.0f", absValue)
+        }
+        return "$" + sign + formatted
+    }
+}
+
+// MARK: - Reports View
+struct ReportsView: View {
+    @EnvironmentObject var auth: AuthService
+    @StateObject private var eventService = EventService.shared
+    @State private var isLoading = true
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.backgroundPrimary.ignoresSafeArea()
+                if isLoading {
+                    VStack(spacing: 12) {
+                        ProgressView().tint(.brandPrimary)
+                        Text("Loading reports...")
+                            .font(.subheadline)
+                            .foregroundColor(.textSecondary)
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            // Quick summary
+                            HStack(spacing: 12) {
+                                StatCard(
+                                    title: "Events",
+                                    value: "\(eventService.events.count)",
+                                    icon: "calendar",
+                                    color: .brandPrimary
+                                )
+                                StatCard(
+                                    title: "Tickets",
+                                    value: "\(eventService.events.reduce(0) { $0 + $1.ticketsSold })",
+                                    icon: "ticket.fill",
+                                    color: .brandAccent
+                                )
+                                StatCard(
+                                    title: "Revenue",
+                                    value: compactCurrency(eventService.events.reduce(0.0) { $0 + (Double($1.ticketsSold) * $1.price) }),
+                                    icon: "dollarsign.circle.fill",
+                                    color: .stateSuccess
+                                )
+                            }
+                            .padding(.horizontal)
+                            
+                            // Top events by revenue
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Top Events by Revenue")
+                                    .font(.headline)
+                                    .foregroundColor(.textPrimary)
+                                    .padding(.horizontal)
+                                
+                                VStack(spacing: 12) {
+                                    ForEach(topEventsByRevenue().prefix(5)) { event in
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(event.title)
+                                                    .font(.subheadline.bold())
+                                                    .foregroundColor(.textPrimary)
+                                                    .lineLimit(1)
+                                                Text(compactCurrency(Double(event.ticketsSold) * event.price))
+                                                    .font(.caption)
+                                                    .foregroundColor(.textSecondary)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption)
+                                                .foregroundColor(.textTertiary)
+                                        }
+                                        .padding()
+                                        .background(Color.surface)
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.border, lineWidth: 1)
+                                        )
+                                        .padding(.horizontal)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical)
+                    }
+                }
+            }
+            .navigationTitle("Reports")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .task { await reload() }
+    }
+    
+    private func compactCurrency(_ value: Double) -> String {
+        let absValue = abs(value)
+        let sign = value < 0 ? "-" : ""
+        let formatted: String
+        switch absValue {
+        case 1_000_000_000...:
+            formatted = String(format: "%.1fB", absValue / 1_000_000_000)
+        case 1_000_000...:
+            formatted = String(format: "%.1fM", absValue / 1_000_000)
+        case 1_000...:
+            formatted = String(format: "%.1fK", absValue / 1_000)
+        default:
+            formatted = String(format: "%.0f", absValue)
+        }
+        return "$" + sign + formatted
+    }
+    private func topEventsByRevenue() -> [Event] {
+        eventService.events.sorted { (Double($0.ticketsSold) * $0.price) > (Double($1.ticketsSold) * $1.price) }
+    }
+    
+    private func reload() async {
+        isLoading = true
+        await eventService.fetchEvents(limit: 200)
+        isLoading = false
     }
 }
 
@@ -537,6 +770,76 @@ struct CompactUserCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.border, lineWidth: 1)
         )
+    }
+}
+
+struct RecentTicketRow: View {
+    let ticket: Ticket
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.surfaceAlt)
+                    .frame(width: 52, height: 52)
+                Image(systemName: "ticket.fill")
+                    .foregroundColor(.brandAccent)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(ticket.Event?.title ?? "Event #\(ticket.eventId)")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.textPrimary)
+                    .lineLimit(1)
+                
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.caption2)
+                        Text(ticket.purchaseDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption)
+                    }
+                    .foregroundColor(.textSecondary)
+                    
+                    statusBadge
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.textTertiary)
+        }
+        .padding()
+        .background(Color.surface)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+    
+    private var statusBadge: some View {
+        let (text, color): (String, Color) = {
+            switch ticket.status {
+            case .VALID: return ("Valid", .stateSuccess)
+            case .USED: return ("Used", .textTertiary)
+            case .CANCELLED: return ("Cancelled", .stateError)
+            case .REFUNDED: return ("Refunded", .stateWarning)
+            }
+        }()
+        return HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(text)
+                .font(.caption2.bold())
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.15))
+        .cornerRadius(8)
     }
 }
 
@@ -668,4 +971,59 @@ struct ProfileDetailRow: View {
 #Preview {
     DashboardView()
         .environmentObject(AuthService.shared)
+}
+
+// MARK: - Recent Activity View
+struct RecentActivityView: View {
+    @EnvironmentObject var auth: AuthService
+    @StateObject private var ticketService = TicketService.shared
+    @State private var isLoading = true
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.backgroundPrimary.ignoresSafeArea()
+                if isLoading {
+                    VStack(spacing: 16) {
+                        ProgressView().tint(.brandPrimary)
+                        Text("Loading activity...")
+                            .font(.subheadline)
+                            .foregroundColor(.textSecondary)
+                    }
+                } else if ticketService.tickets.isEmpty {
+                    EmptyActivityCard(
+                        icon: "calendar.badge.clock",
+                        title: "No Activity",
+                        subtitle: "Your recent activity will appear here"
+                    )
+                    .padding()
+                } else {
+                    List {
+                        ForEach(ticketService.tickets) { ticket in
+                            NavigationLink {
+                                TicketDetailView(ticket: ticket)
+                            } label: {
+                                RecentTicketRow(ticket: ticket)
+                            }
+                            .listRowBackground(Color.surface)
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.backgroundPrimary)
+                    .refreshable { await reload() }
+                }
+            }
+            .navigationTitle("Recent Activity")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .task { await reload() }
+    }
+    
+    private func reload() async {
+        guard let token = auth.token else { isLoading = false; return }
+        isLoading = true
+        await ticketService.fetchMyTickets(token: token)
+        isLoading = false
+    }
 }

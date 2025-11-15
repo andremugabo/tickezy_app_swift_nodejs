@@ -100,6 +100,10 @@ class EventService: ObservableObject {
                 self.events = []
             }
         } catch {
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                // Ignore benign cancellation (e.g., view disappears or request superseded)
+                return
+            }
             print("Fetch events error:", error)
             self.errorMessage = error.localizedDescription
             self.events = []
@@ -135,6 +139,10 @@ class EventService: ObservableObject {
                 self.selectedEvent = nil
             }
         } catch {
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                // Ignore benign cancellation
+                return
+            }
             self.errorMessage = error.localizedDescription
             self.selectedEvent = nil
         }

@@ -94,6 +94,9 @@ struct AdminUsersView: View {
         .sheet(isPresented: $showingUserDetail) {
             if let user = selectedUser {
                 UserDetailSheet(user: user)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(16)
             }
         }
         .task {
@@ -243,6 +246,7 @@ struct AdminUsersView: View {
                         selectedRole = nil
                         showingFilters = false
                     }
+                    .listRowBackground(Color.surface)
                     
                     FilterButton(
                         title: "Admin",
@@ -252,6 +256,7 @@ struct AdminUsersView: View {
                         selectedRole = .ADMIN
                         showingFilters = false
                     }
+                    .listRowBackground(Color.surface)
                     
                     FilterButton(
                         title: "User",
@@ -261,8 +266,12 @@ struct AdminUsersView: View {
                         selectedRole = .CUSTOMER
                         showingFilters = false
                     }
+                    .listRowBackground(Color.surface)
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.backgroundPrimary)
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -317,6 +326,9 @@ struct StatCard: View {
             Text(value)
                 .font(.title2.bold())
                 .foregroundColor(.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .monospacedDigit()
             
             Text(title)
                 .font(.caption)
@@ -429,6 +441,8 @@ struct UserDetailSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var showingDeleteConfirmation = false
     @State private var showingRoleChangeConfirmation = false
+    @State private var showingSendNotification = false
+    @State private var showingUserActivity = false
     
     var body: some View {
         NavigationStack {
@@ -493,7 +507,7 @@ struct UserDetailSheet: View {
                             UserDetailRow(
                                 icon: "clock.fill",
                                 label: "Last Updated",
-                                value: formatRelativeDate(updatedAt)
+                                value: RelativeDateTimeFormatter().localizedString(for: updatedAt, relativeTo: Date())
                             )
                         }
                     }
@@ -524,20 +538,18 @@ struct UserDetailSheet: View {
                                 icon: "envelope.badge",
                                 title: "Send Notification",
                                 subtitle: "Send a message to this user",
-                                color: .stateInfo,
-                                isComingSoon: true
+                                color: .stateInfo
                             ) {
-                                // Coming soon
+                                showingSendNotification = true
                             }
                             
                             AdminActionButton(
                                 icon: "chart.bar.fill",
                                 title: "View Activity",
                                 subtitle: "See user's activity history",
-                                color: .brandPrimary,
-                                isComingSoon: true
+                                color: .brandPrimary
                             ) {
-                                // Coming soon
+                                showingUserActivity = true
                             }
                         }
                         .padding(.horizontal)
@@ -559,12 +571,11 @@ struct UserDetailSheet: View {
                         ) {
                             showingDeleteConfirmation = true
                         }
-                        .padding(.horizontal)
                     }
-                    .padding(.top, 8)
                 }
                 .padding(.bottom, 24)
             }
+            .scrollIndicators(.hidden)
             .background(Color.backgroundPrimary)
             .navigationTitle("User Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -575,6 +586,12 @@ struct UserDetailSheet: View {
                     }
                     .foregroundColor(.brandPrimary)
                 }
+            }
+            .sheet(isPresented: $showingSendNotification) {
+                SendNotificationSheet(user: user)
+            }
+            .sheet(isPresented: $showingUserActivity) {
+                UserActivityView(user: user)
             }
             .confirmationDialog("Change User Role", isPresented: $showingRoleChangeConfirmation) {
                 Button("Make Admin") {
@@ -598,111 +615,306 @@ struct UserDetailSheet: View {
         }
     }
     
-    private func formatRelativeDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-}
-
-struct UserDetailRow: View {
-    let icon: String
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.body)
-                .foregroundColor(.brandPrimary)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(.textSecondary)
-                Text(value)
-                    .font(.subheadline)
-                    .foregroundColor(.textPrimary)
-            }
-            
-            Spacer()
-        }
-        .padding()
-        .background(Color.surfaceAlt)
-        .cornerRadius(8)
-    }
-}
-
-struct AdminActionButton: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let color: Color
-    var isComingSoon: Bool = false
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: icon)
-                        .font(.body)
-                        .foregroundColor(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text(title)
+    // MARK: - Send Notification Sheet
+    struct SendNotificationSheet: View {
+        let user: User
+        @Environment(\.dismiss) var dismiss
+        @EnvironmentObject var auth: AuthService
+        @StateObject private var notificationService = NotificationService.shared
+        @State private var titleText = ""
+        @State private var messageText = ""
+        @State private var isSending = false
+        @State private var error: String?
+        @State private var showSuccessBanner = false
+        
+        var body: some View {
+            NavigationStack {
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Title")
                             .font(.subheadline.bold())
+                            .foregroundColor(.textSecondary)
+                        TextField("Enter title", text: $titleText)
+                            .padding(12)
+                            .background(Color.surfaceAlt)
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
                             .foregroundColor(.textPrimary)
-                        
-                        if isComingSoon {
-                            Text("Soon")
-                                .font(.caption2.bold())
-                                .foregroundColor(.brandAccent)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.brandAccent.opacity(0.15))
-                                .cornerRadius(4)
-                        }
+                            .tint(.brandPrimary)
+                    }
+                    .padding(.horizontal)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Message")
+                            .font(.subheadline.bold())
+                            .foregroundColor(.textSecondary)
+                        TextEditor(text: $messageText)
+                            .frame(minHeight: 120)
+                            .padding(12)
+                            .background(Color.surfaceAlt)
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.border, lineWidth: 1)
+                            )
+                            .foregroundColor(.textPrimary)
+                            .tint(.brandPrimary)
+                    }
+                    .padding(.horizontal)
+                    
+                    if let error {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundColor(.stateError)
+                            .padding(.horizontal)
                     }
                     
-                    Text(subtitle)
+                    Spacer()
+                }
+                .background(Color.backgroundPrimary)
+                .navigationTitle("Send Notification")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") { dismiss() }
+                            .foregroundColor(.textSecondary)
+                    }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    VStack(spacing: 0) {
+                        Divider().background(Color.border)
+                        Button {
+                            Task { await send() }
+                        } label: {
+                            HStack {
+                                if isSending {
+                                    ProgressView()
+                                        .tint(.buttonPrimaryText)
+                                }
+                                Text(isSending ? "Sending..." : "Send")
+                                    .font(.headline)
+                                    .foregroundColor(.buttonPrimaryText)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .background(canSend && !isSending ? Color.brandPrimary : Color.textTertiary.opacity(0.2))
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                            .padding(.vertical, 10)
+                        }
+                        .disabled(!canSend || isSending)
+                        .animation(.easeInOut, value: isSending)
+                    }
+                    .background(Color.surface)
+                }
+                .overlay(alignment: .top) {
+                    if showSuccessBanner {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.buttonPrimaryText)
+                            Text("Notification sent")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.buttonPrimaryText)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.stateSuccess)
+                        .cornerRadius(10)
+                        .padding(.top, 12)
+                    }
+                }
+            }
+        }
+        
+        private var canSend: Bool { !titleText.trimmingCharacters(in: .whitespaces).isEmpty && !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        
+        private func send() async {
+            guard let token = auth.token else { error = "Unauthorized"; return }
+            isSending = true
+            defer { isSending = false }
+            do {
+                try await notificationService.sendNotification(to: String(user.id), title: titleText, message: messageText, token: token)
+                await MainActor.run {
+#if canImport(UIKit)
+                    let generator = UINotificationFeedbackGenerator()
+                    generator.notificationOccurred(.success)
+#endif
+                    showSuccessBanner = true
+                }
+                try? await Task.sleep(nanoseconds: 1_200_000_000)
+                await MainActor.run {
+                    showSuccessBanner = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    // MARK: - User Activity View
+    struct UserActivityView: View {
+        let user: User
+        @EnvironmentObject var auth: AuthService
+        @StateObject private var ticketService = TicketService.shared
+        @State private var isLoading = true
+        
+        var body: some View {
+            NavigationStack {
+                ZStack {
+                    Color.backgroundPrimary.ignoresSafeArea()
+                    if isLoading {
+                        VStack(spacing: 12) {
+                            ProgressView().tint(.brandPrimary)
+                            Text("Loading activity...")
+                                .font(.subheadline)
+                                .foregroundColor(.textSecondary)
+                        }
+                    } else if ticketService.tickets.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 40))
+                                .foregroundColor(.textTertiary)
+                            Text("No Activity")
+                                .font(.headline)
+                                .foregroundColor(.textPrimary)
+                            Text("No tickets found for this user")
+                                .font(.subheadline)
+                                .foregroundColor(.textSecondary)
+                        }
+                        .padding()
+                    } else {
+                        List {
+                            ForEach(ticketService.tickets) { ticket in
+                                RecentTicketRow(ticket: ticket)
+                                    .listRowBackground(Color.surface)
+                            }
+                        }
+                        .listStyle(.insetGrouped)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.backgroundPrimary)
+                        .refreshable { await reload() }
+                    }
+                }
+                .navigationTitle(user.name)
+                .navigationBarTitleDisplayMode(.inline)
+            }
+            .task { await reload() }
+        }
+        
+        private func reload() async {
+            guard let token = auth.token else { isLoading = false; return }
+            isLoading = true
+            await ticketService.fetchTicketsForUser(userId: String(user.id), token: token)
+            isLoading = false
+        }
+    }
+    
+    struct UserDetailRow: View {
+        let icon: String
+        let label: String
+        let value: String
+        
+        var body: some View {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.body)
+                    .foregroundColor(.brandPrimary)
+                    .frame(width: 24)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
                         .font(.caption)
                         .foregroundColor(.textSecondary)
+                    Text(value)
+                        .font(.subheadline)
+                        .foregroundColor(.textPrimary)
                 }
                 
                 Spacer()
-                
-                if !isComingSoon {
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.textTertiary)
-                }
             }
             .padding()
-            .background(Color.surface)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(color.opacity(0.3), lineWidth: 1)
-            )
-            .opacity(isComingSoon ? 0.6 : 1.0)
+            .background(Color.surfaceAlt)
+            .cornerRadius(8)
         }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(isComingSoon)
     }
-}
-
-// MARK: - Preview
-#Preview {
-    NavigationStack {
-        AdminUsersView()
-            .environmentObject(AuthService.shared)
+    
+    struct AdminActionButton: View {
+        let icon: String
+        let title: String
+        let subtitle: String
+        let color: Color
+        var isComingSoon: Bool = false
+        let action: () -> Void
+        
+        var body: some View {
+            Button(action: action) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(color.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                        
+                        Image(systemName: icon)
+                            .font(.body)
+                            .foregroundColor(color)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 8) {
+                            Text(title)
+                                .font(.subheadline.bold())
+                                .foregroundColor(.textPrimary)
+                            
+                            if isComingSoon {
+                                Text("Soon")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.brandAccent)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.brandAccent.opacity(0.15))
+                                    .cornerRadius(4)
+                            }
+                        }
+                        
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundColor(.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    if !isComingSoon {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.textTertiary)
+                    }
+                }
+                .padding()
+                .background(Color.surface)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+                .opacity(isComingSoon ? 0.6 : 1.0)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(isComingSoon)
+        }
+    }
+    
+    // MARK: - Preview
+    #Preview {
+        NavigationStack {
+            AdminUsersView()
+                .environmentObject(AuthService.shared)
+        }
     }
 }

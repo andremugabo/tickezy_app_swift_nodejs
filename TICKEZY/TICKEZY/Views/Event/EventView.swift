@@ -283,6 +283,7 @@ struct EventView: View {
                             viewModel.selectedCategory = category
                             showFilters = false
                         }
+                        .listRowBackground(Color.surface)
                     }
                     
                     EventFilterButton(
@@ -292,6 +293,7 @@ struct EventView: View {
                         viewModel.selectedCategory = nil
                         showFilters = false
                     }
+                    .listRowBackground(Color.surface)
                 }
                 
                 Section("Status") {
@@ -304,6 +306,7 @@ struct EventView: View {
                             viewModel.selectedStatus = status
                             showFilters = false
                         }
+                        .listRowBackground(Color.surface)
                     }
                     
                     EventFilterButton(
@@ -313,8 +316,12 @@ struct EventView: View {
                         viewModel.selectedStatus = nil
                         showFilters = false
                     }
+                    .listRowBackground(Color.surface)
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.backgroundPrimary)
             .navigationTitle("Filters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

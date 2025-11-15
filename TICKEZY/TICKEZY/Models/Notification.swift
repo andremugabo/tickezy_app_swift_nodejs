@@ -8,7 +8,7 @@
 import Foundation
 
 enum NotificationType: String, Codable {
-    case TICKET_CONFIRMATION, EVENT_REMINDER, PAYMENT_SUCCESS, EVENT_UPDATE
+    case TICKET_CONFIRMATION, EVENT_REMINDER, PAYMENT_SUCCESS, EVENT_UPDATE, ADMIN_MESSAGE
 }
 
 struct Notification: Codable, Identifiable {

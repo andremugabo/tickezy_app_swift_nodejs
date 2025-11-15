@@ -230,3 +230,28 @@ exports.deleteNotification = asyncHandler(async (req, res) => {
   await notif.destroy();
   res.status(200).json({ success: true, message: 'Notification deleted' });
 });
+
+exports.sendNotificationToUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, message, type, relatedEventId, relatedTicketId } = req.body;
+
+  if (!title || !message) {
+    return res.status(400).json({ success: false, message: 'Title and message are required' });
+  }
+
+  const user = await User.findByPk(id);
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const payload = {
+    userId: user.id,
+    title,
+    message,
+    type: type || 'ADMIN_MESSAGE',
+    timestamp: new Date(),
+    relatedEventId: relatedEventId || null,
+    relatedTicketId: relatedTicketId || null,
+  };
+  const notif = await Notification.create(payload);
+
+  res.status(201).json({ success: true, message: 'Notification sent', data: notif });
+});

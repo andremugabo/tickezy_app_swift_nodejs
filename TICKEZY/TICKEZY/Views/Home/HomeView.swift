@@ -10,6 +10,9 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var userService = UserService.shared
+    @StateObject private var ticketService = TicketService.shared
+    @StateObject private var eventService = EventService.shared
+    @StateObject private var notificationService = NotificationService.shared
     
     // Placeholder state for other modules
     @State private var upcomingTickets: [Ticket] = []
@@ -49,7 +52,7 @@ struct HomeView: View {
                                 .fill(Color.stateError)
                                 .frame(width: 8, height: 8)
                                 .offset(x: 4, y: -4)
-                                .opacity(0) // Show when there are notifications
+                                .opacity(unreadCount > 0 ? 1 : 0)
                         }
                     }
                 }
@@ -143,8 +146,7 @@ struct HomeView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 NavigationLink {
-                    Text("Browse Events - Coming Soon")
-                        .navigationTitle("Browse Events")
+                    EventView()
                 } label: {
                     QuickActionCard(
                         icon: "calendar.badge.plus",
@@ -154,8 +156,7 @@ struct HomeView: View {
                 }
                 
                 NavigationLink {
-                    Text("My Tickets - Coming Soon")
-                        .navigationTitle("My Tickets")
+                    TicketView()
                 } label: {
                     QuickActionCard(
                         icon: "ticket.fill",
@@ -165,8 +166,7 @@ struct HomeView: View {
                 }
                 
                 NavigationLink {
-                    Text("Favorites - Coming Soon")
-                        .navigationTitle("Favorites")
+                    FavoritesView()
                 } label: {
                     QuickActionCard(
                         icon: "heart.fill",
@@ -176,8 +176,7 @@ struct HomeView: View {
                 }
                 
                 NavigationLink {
-                    Text("Search - Coming Soon")
-                        .navigationTitle("Search")
+                    EventView()
                 } label: {
                     QuickActionCard(
                         icon: "magnifyingglass",
@@ -202,8 +201,7 @@ struct HomeView: View {
                 Spacer()
                 
                 NavigationLink {
-                    Text("All Tickets - Coming Soon")
-                        .navigationTitle("My Tickets")
+                    TicketView()
                 } label: {
                     Text("View All")
                         .font(.subheadline)
@@ -260,8 +258,7 @@ struct HomeView: View {
                 Spacer()
                 
                 NavigationLink {
-                    Text("All Events - Coming Soon")
-                        .navigationTitle("Events")
+                    EventView()
                 } label: {
                     Text("See All")
                         .font(.subheadline)
@@ -294,10 +291,10 @@ struct HomeView: View {
                 .padding(.horizontal)
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                CategoryCard(icon: "music.note", title: "Music", color: .brandPrimary)
-                CategoryCard(icon: "theatermasks.fill", title: "Arts", color: .brandSecondary)
-                CategoryCard(icon: "sportscourt.fill", title: "Sports", color: .brandAccent)
-                CategoryCard(icon: "briefcase.fill", title: "Business", color: .stateInfo)
+                NavigationLink { EventView() } label: { CategoryCard(icon: "music.note", title: "Music", color: .brandPrimary) }
+                NavigationLink { EventView() } label: { CategoryCard(icon: "theatermasks.fill", title: "Arts", color: .brandSecondary) }
+                NavigationLink { EventView() } label: { CategoryCard(icon: "sportscourt.fill", title: "Sports", color: .brandAccent) }
+                NavigationLink { EventView() } label: { CategoryCard(icon: "briefcase.fill", title: "Business", color: .stateInfo) }
             }
             .padding(.horizontal)
         }
@@ -381,16 +378,24 @@ struct HomeView: View {
         do {
             try await userService.fetchProfile(token: token)
             
-            // TODO: Fetch tickets, events when services are implemented
-            // upcomingTickets = await TicketService.fetchUpcoming(token: token)
-            // upcomingEvents = await EventService.fetchUpcoming(token: token)
-            // featuredEvents = await EventService.fetchFeatured(token: token)
+            await ticketService.fetchMyTickets(token: token)
+            await eventService.fetchEvents(limit: 20, isPublished: true)
+            await notificationService.fetchNotifications(token: token)
+            
+            upcomingTickets = ticketService.tickets
+            let events = eventService.events
+            upcomingEvents = Array(events.filter { $0.status == .UPCOMING }.prefix(10))
+            featuredEvents = Array(events.prefix(5))
 
         } catch {
             errorMessage = error.localizedDescription
         }
         
         isLoading = false
+    }
+    // Unread notifications count for badge
+    private var unreadCount: Int {
+        notificationService.notifications.filter { !$0.isRead }.count
     }
 }
 
@@ -449,7 +454,7 @@ struct TicketCard: View {
             
             // Event Info
             VStack(alignment: .leading, spacing: 4) {
-                Text("Event #\(ticket.eventId)")
+                Text(ticket.Event?.title ?? "Event #\(ticket.eventId)")
                     .font(.subheadline.bold())
                     .foregroundColor(.textPrimary)
                 
@@ -484,15 +489,42 @@ struct FeaturedEventCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Event Image Placeholder
-            Rectangle()
-                .fill(Color.brandGradient)
-                .frame(width: 280, height: 160)
-                .overlay(
-                    Image(systemName: "photo.fill")
-                        .font(.largeTitle)
-                        .foregroundColor(.white.opacity(0.3))
-                )
+            // Event Image
+            Group {
+                if let url = event.fullImageURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ZStack {
+                                Color.surfaceAlt
+                                ProgressView()
+                            }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        case .failure:
+                            ZStack {
+                                Color.brandGradient.opacity(0.3)
+                                Image(systemName: "photo.fill")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.white.opacity(0.3))
+                            }
+                        @unknown default:
+                            Color.surfaceAlt
+                        }
+                    }
+                } else {
+                    ZStack {
+                        Color.brandGradient.opacity(0.3)
+                        Image(systemName: "photo.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.white.opacity(0.3))
+                    }
+                }
+            }
+            .frame(width: 280, height: 160)
+            .clipped()
             
             // Event Info
             VStack(alignment: .leading, spacing: 8) {
@@ -504,7 +536,7 @@ struct FeaturedEventCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar")
                         .font(.caption)
-                    Text("Coming Soon")
+                    Text(event.eventDate.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption)
                 }
                 .foregroundColor(.textSecondary)
@@ -512,7 +544,7 @@ struct FeaturedEventCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.circle.fill")
                         .font(.caption)
-                    Text("Location")
+                    Text(event.location)
                         .font(.caption)
                 }
                 .foregroundColor(.textSecondary)
@@ -579,7 +611,7 @@ struct EventListCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar")
                         .font(.caption2)
-                    Text("Date TBA")
+                    Text(event.eventDate.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption)
                 }
                 .foregroundColor(.textSecondary)
@@ -587,7 +619,7 @@ struct EventListCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.circle.fill")
                         .font(.caption2)
-                    Text("Location TBA")
+                    Text(event.location)
                         .font(.caption)
                 }
                 .foregroundColor(.textSecondary)
@@ -640,70 +672,206 @@ struct CategoryCard: View {
     let color: Color
     
     var body: some View {
-        Button {
-            // Handle category tap
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
-                    .frame(width: 44, height: 44)
-                    .background(color.opacity(0.2))
-                    .cornerRadius(10)
-                
-                Text(title)
-                    .font(.subheadline.bold())
-                    .foregroundColor(.textPrimary)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.textTertiary)
-            }
-            .padding()
-            .background(Color.surface)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.border, lineWidth: 1)
-            )
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+                .frame(width: 44, height: 44)
+                .background(color.opacity(0.2))
+                .cornerRadius(10)
+            
+            Text(title)
+                .font(.subheadline.bold())
+                .foregroundColor(.textPrimary)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.textTertiary)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(Color.surface)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }
 
 struct NotificationsSheet: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var auth: AuthService
+    @StateObject private var notificationService = NotificationService.shared
+    @State private var isLoading = true
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "bell.slash.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.textTertiary)
-                
-                Text("No Notifications")
-                    .font(.title2.bold())
-                    .foregroundColor(.textPrimary)
-                
-                Text("You're all caught up!\nNotifications will appear here.")
-                    .font(.subheadline)
-                    .foregroundColor(.textSecondary)
-                    .multilineTextAlignment(.center)
+            Group {
+                if isLoading {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .tint(.brandPrimary)
+                        Text("Loading notifications...")
+                            .font(.subheadline)
+                            .foregroundColor(.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if notificationService.notifications.isEmpty {
+                    VStack(spacing: 20) {
+                        Image(systemName: "bell.slash.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.textTertiary)
+                        
+                        Text("No Notifications")
+                            .font(.title2.bold())
+                            .foregroundColor(.textPrimary)
+                        
+                        Text("You're all caught up!\nNotifications will appear here.")
+                            .font(.subheadline)
+                            .foregroundColor(.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(notificationService.notifications) { notif in
+                            NotificationRowView(notification: notif)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button {
+                                        Task { await markRead(notif) }
+                                    } label: {
+                                        Label("Mark Read", systemImage: "envelope.open")
+                                    }
+                                    .tint(.brandPrimary)
+                                    
+                                    Button(role: .destructive) {
+                                        Task { await delete(notif) }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    .tint(.stateError)
+                                }
+                                .listRowBackground(Color.surface)
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.backgroundPrimary)
+                }
             }
-            .frame(maxHeight: .infinity)
             .background(Color.backgroundPrimary)
             .navigationTitle("Notifications")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                ToolbarItem(placement: .topBarLeading) {
+                    if !notificationService.notifications.isEmpty {
+                        Button("Mark All Read") {
+                            Task { await markAllRead() }
+                        }
+                        .foregroundColor(.brandPrimary)
                     }
-                    .foregroundColor(.brandPrimary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(.brandPrimary)
                 }
             }
+        }
+        .task { await fetch() }
+    }
+    
+    private func fetch() async {
+        guard let token = auth.token else {
+            isLoading = false
+            return
+        }
+        await notificationService.fetchNotifications(token: token)
+        isLoading = false
+    }
+    
+    private func markRead(_ notif: Notification) async {
+        guard let token = auth.token else { return }
+        do {
+            try await notificationService.markRead(id: notif.id, token: token)
+            await notificationService.fetchNotifications(token: token)
+        } catch { }
+    }
+    
+    private func delete(_ notif: Notification) async {
+        guard let token = auth.token else { return }
+        do {
+            try await notificationService.deleteNotification(id: notif.id, token: token)
+            await notificationService.fetchNotifications(token: token)
+        } catch { }
+    }
+    
+    private func markAllRead() async {
+        guard let token = auth.token else { return }
+        do {
+            try await notificationService.markAllRead(token: token)
+            await notificationService.fetchNotifications(token: token)
+        } catch { }
+    }
+}
+
+struct NotificationRowView: View {
+    let notification: Notification
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(iconColor)
+                .frame(width: 28, height: 28)
+                .background(iconColor.opacity(0.15))
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(notification.title)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.textPrimary)
+                        .lineLimit(2)
+                    Spacer()
+                    Text(notification.timestamp.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption2)
+                        .foregroundColor(.textTertiary)
+                }
+                Text(notification.message)
+                    .font(.caption)
+                    .foregroundColor(.textSecondary)
+                    .lineLimit(3)
+            }
+        }
+        .padding(.vertical, 6)
+        .overlay(alignment: .leading) {
+            if !notification.isRead {
+                Capsule()
+                    .fill(Color.brandPrimary)
+                    .frame(width: 3)
+                    .offset(x: -8)
+            }
+        }
+    }
+    
+    private var icon: String {
+        switch notification.type {
+        case .TICKET_CONFIRMATION: return "ticket.fill"
+        case .EVENT_REMINDER: return "calendar.badge.clock"
+        case .PAYMENT_SUCCESS: return "checkmark.seal.fill"
+        case .EVENT_UPDATE: return "bell.badge.fill"
+        case .ADMIN_MESSAGE: return "envelope.badge"
+        }
+    }
+    
+    private var iconColor: Color {
+        switch notification.type {
+        case .TICKET_CONFIRMATION: return .brandSecondary
+        case .EVENT_REMINDER: return .brandPrimary
+        case .PAYMENT_SUCCESS: return .stateSuccess
+        case .EVENT_UPDATE: return .stateInfo
+        case .ADMIN_MESSAGE: return .brandAccent
         }
     }
 }
@@ -712,4 +880,52 @@ struct NotificationsSheet: View {
 #Preview {
     HomeView()
         .environmentObject(AuthService.shared)
+}
+
+// MARK: - Favorites View (placeholder)
+struct FavoritesView: View {
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.backgroundPrimary.ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Image(systemName: "heart.slash")
+                        .font(.system(size: 60))
+                        .foregroundColor(.textTertiary)
+                    Text("No Favorites Yet")
+                        .font(.title2.bold())
+                        .foregroundColor(.textPrimary)
+                    Text("Tap the heart on events to save them here.")
+                        .font(.subheadline)
+                        .foregroundColor(.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    NavigationLink {
+                        EventView()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "calendar.badge.plus")
+                            Text("Browse Events")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.brandPrimary, Color.brandSecondary],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(12)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding()
+            }
+            .navigationTitle("Favorites")
+            .navigationBarTitleDisplayMode(.large)
+        }
+    }
 }

@@ -20,7 +20,8 @@ exports.createTicket = async (req, res) => {
 exports.getAllTickets = async (req, res) => {
   try {
     const user = req.user;
-    const tickets = await TicketService.getAllTickets(user);
+    const { userId } = req.query;
+    const tickets = await TicketService.getAllTickets(user, userId);
     res.status(200).json(tickets);
   } catch (error) {
     res.status(500).json({ message: error.message });

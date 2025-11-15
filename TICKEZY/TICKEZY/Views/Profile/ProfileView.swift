@@ -10,11 +10,18 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var auth: AuthService
     @StateObject private var userService = UserService.shared
+    @StateObject private var ticketService = TicketService.shared
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showingEditProfile = false
     @State private var showingLogoutConfirmation = false
     @State private var showingSettings = false
+    @State private var showingChangePassword = false
+    
+    // Stats
+    @State private var statsEvents: Int = 0
+    @State private var statsTickets: Int = 0
+    @State private var statsSpent: Double = 0.0
 
     var body: some View {
         NavigationStack {
@@ -79,6 +86,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsSheet()
+            }
+            .sheet(isPresented: $showingChangePassword) {
+                ChangePasswordSheet()
             }
             .task {
                 await loadProfile()
@@ -171,19 +181,19 @@ struct ProfileView: View {
         HStack(spacing: 12) {
             StatPill(
                 title: "Events",
-                value: "0",
+                value: "\(statsEvents)",
                 icon: "calendar"
             )
             
             StatPill(
                 title: "Tickets",
-                value: "0",
+                value: "\(statsTickets)",
                 icon: "ticket.fill"
             )
             
             StatPill(
                 title: "Spent",
-                value: "$0",
+                value: "$\(String(format: "%.2f", statsSpent))",
                 icon: "creditcard.fill"
             )
         }
@@ -279,7 +289,7 @@ struct ProfileView: View {
                     subtitle: "Update your password",
                     color: .brandSecondary
                 ) {
-                    // Handle change password
+                    showingChangePassword = true
                 }
                 
                 ActionButton(
@@ -311,7 +321,7 @@ struct ProfileView: View {
                     subtitle: "Permanently delete your account",
                     color: .stateError
                 ) {
-                    // Handle delete account
+                    showingLogoutConfirmation = true
                 }
             }
             .padding()
@@ -430,11 +440,26 @@ struct ProfileView: View {
         
         do {
             try await userService.fetchProfile(token: token)
+            await ticketService.fetchMyTickets(token: token)
+            computeStats()
         } catch {
             errorMessage = error.localizedDescription
         }
         
         isLoading = false
+    }
+    // MARK: - Compute Stats
+    private func computeStats() {
+        let tickets = ticketService.tickets
+        statsTickets = tickets.count
+        let uniqueEventIds = Set(tickets.map { $0.eventId })
+        statsEvents = uniqueEventIds.count
+        // Sum spent using related Event price when available
+        let total = tickets.reduce(0.0) { acc, t in
+            if let price = t.Event?.price { return acc + (Double(t.quantity) * price) }
+            return acc
+        }
+        statsSpent = total
     }
 }
 
@@ -573,9 +598,12 @@ struct EditProfileSheet: View {
             Form {
                 Section("Personal Information") {
                     TextField("Name", text: $name)
+                        .foregroundColor(.textPrimary)
                     TextField("Phone Number", text: $phoneNumber)
                         .keyboardType(.phonePad)
+                        .foregroundColor(.textPrimary)
                 }
+                .listRowBackground(Color.surface.opacity(0.5))
                 
                 Section("Email") {
                     Text(profile.email)
@@ -583,6 +611,7 @@ struct EditProfileSheet: View {
                 }
                 .listRowBackground(Color.surface.opacity(0.5))
             }
+            .tint(.brandPrimary)
             .scrollContentBackground(.hidden)
             .background(Color.backgroundPrimary)
             .navigationTitle("Edit Profile")
@@ -624,15 +653,19 @@ struct SettingsSheet: View {
                     Toggle("Push Notifications", isOn: $pushNotifications)
                         .disabled(!notificationsEnabled)
                 }
+                .listRowBackground(Color.surface.opacity(0.5))
                 
                 Section("Preferences") {
                     NavigationLink("Language") {
                         Text("Language settings coming soon")
+                            .foregroundColor(.textSecondary)
                     }
                     NavigationLink("Privacy") {
                         Text("Privacy settings coming soon")
+                            .foregroundColor(.textSecondary)
                     }
                 }
+                .listRowBackground(Color.surface.opacity(0.5))
                 
                 Section("About") {
                     HStack {
@@ -642,7 +675,9 @@ struct SettingsSheet: View {
                             .foregroundColor(.textSecondary)
                     }
                 }
+                .listRowBackground(Color.surface.opacity(0.5))
             }
+            .tint(.brandPrimary)
             .scrollContentBackground(.hidden)
             .background(Color.backgroundPrimary)
             .navigationTitle("Settings")
@@ -663,4 +698,52 @@ struct SettingsSheet: View {
 #Preview {
     ProfileView()
         .environmentObject(AuthService.shared)
+}
+
+// MARK: - Change Password Sheet (placeholder)
+struct ChangePasswordSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var currentPassword = ""
+    @State private var newPassword = ""
+    @State private var confirmPassword = ""
+    @State private var isSaving = false
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Current Password") {
+                    SecureField("Current Password", text: $currentPassword)
+                        .foregroundColor(.textPrimary)
+                }
+                .listRowBackground(Color.surface.opacity(0.5))
+                
+                Section("New Password") {
+                    SecureField("New Password", text: $newPassword)
+                        .foregroundColor(.textPrimary)
+                    SecureField("Confirm Password", text: $confirmPassword)
+                        .foregroundColor(.textPrimary)
+                }
+                .listRowBackground(Color.surface.opacity(0.5))
+            }
+            .tint(.brandPrimary)
+            .scrollContentBackground(.hidden)
+            .background(Color.backgroundPrimary)
+            .navigationTitle("Change Password")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.textSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(isSaving ? "Saving..." : "Save") {
+                        // TODO: Hook up to AuthService change password endpoint when available
+                        dismiss()
+                    }
+                    .disabled(isSaving)
+                    .foregroundColor(.brandPrimary)
+                }
+            }
+        }
+    }
 }

@@ -86,6 +86,34 @@ class TicketService: ObservableObject {
         }
     }
     
+    // MARK: - Fetch tickets for a specific user (admin)
+    func fetchTicketsForUser(userId: String, token: String) async {
+        do {
+            guard var components = URLComponents(string: baseURL) else { throw URLError(.badURL) }
+            components.queryItems = [URLQueryItem(name: "userId", value: userId)]
+            guard let url = components.url else { throw URLError(.badURL) }
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            switch httpResponse.statusCode {
+            case 200:
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                self.tickets = try decoder.decode([Ticket].self, from: data)
+                self.errorMessage = nil
+            default:
+                if let errorMessage = try? JSONDecoder().decode(MessageResponse.self, from: data) {
+                    self.errorMessage = errorMessage.message
+                } else {
+                    self.errorMessage = "Failed to fetch tickets"
+                }
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+    
     // MARK: - Purchase Ticket
     
     func purchaseTicket(eventId: String, quantity: Int, token: String) async throws {

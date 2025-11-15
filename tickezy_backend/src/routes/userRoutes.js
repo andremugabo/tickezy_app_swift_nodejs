@@ -29,5 +29,6 @@ router.delete('/notifications/:id', authenticate, userController.deleteNotificat
 // 🛂 Admin Routes
 // -------------------------------------------
 router.get('/all', authenticate, adminOnly, userController.getAllUsers);
+router.post('/:id/notifications', authenticate, adminOnly, userController.sendNotificationToUser);
 
 module.exports = router;

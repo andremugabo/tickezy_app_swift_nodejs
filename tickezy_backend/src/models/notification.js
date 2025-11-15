@@ -10,7 +10,7 @@ const Notification = sequelize.define('Notification', {
   title: DataTypes.STRING,
   message: DataTypes.TEXT,
   type: {
-    type: DataTypes.ENUM('TICKET_CONFIRMATION', 'EVENT_REMINDER', 'PAYMENT_SUCCESS', 'EVENT_UPDATE'),
+    type: DataTypes.ENUM('TICKET_CONFIRMATION', 'EVENT_REMINDER', 'PAYMENT_SUCCESS', 'EVENT_UPDATE', 'ADMIN_MESSAGE'),
   },
   timestamp: {
     type: DataTypes.DATE,

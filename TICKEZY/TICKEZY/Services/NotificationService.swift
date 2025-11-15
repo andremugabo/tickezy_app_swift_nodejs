@@ -22,6 +22,35 @@ class NotificationService: ObservableObject {
     struct MessageResponse: Codable { let success: Bool?; let message: String }
     struct NotificationsResponse: Codable { let success: Bool; let data: [Notification] }
     
+    // MARK: - Send notification to specific user (admin)
+    func sendNotification(to userId: String, title: String, message: String, type: String? = nil, relatedEventId: String? = nil, relatedTicketId: String? = nil, token: String) async throws {
+        guard let url = URL(string: "\(baseURL)/\(userId)/notifications") else { throw URLError(.badURL) }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any?] = [
+            "title": title,
+            "message": message,
+            "type": type,
+            "relatedEventId": relatedEventId,
+            "relatedTicketId": relatedTicketId
+        ]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body.compactMapValues { $0 })
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        switch http.statusCode {
+        case 201:
+            self.errorMessage = nil
+        default:
+            if let err = try? JSONDecoder().decode(MessageResponse.self, from: data), let msg = err.message as String? {
+                throw NSError(domain: "", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: msg])
+            } else {
+                throw URLError(.badServerResponse)
+            }
+        }
+    }
+    
     // MARK: - Fetch notifications
     func fetchNotifications(token: String) async {
         do {
