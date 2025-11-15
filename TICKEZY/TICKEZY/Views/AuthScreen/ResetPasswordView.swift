@@ -126,10 +126,19 @@ struct ResetPasswordView: View {
             
         }
         .navigationBarBackButtonHidden(true)
-        .onChange(of: shouldDismissToRoot) { _, newValue in
-            if newValue {
-                dismissToLogin()
-            }
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text(alertTitle),
+                message: Text(alertMessage),
+                dismissButton: .default(Text("OK")) {
+                    if alertTitle == "Success" {
+                        // Pop Reset -> Verify -> Forgot => back to Login
+                        dismiss()
+                        DispatchQueue.main.async { dismiss() }
+                        DispatchQueue.main.async { dismiss() }
+                    }
+                }
+            )
         }
     }
 
@@ -259,7 +268,9 @@ struct ResetPasswordView: View {
             
             await MainActor.run {
                 isLoading = false
-                shouldDismissToRoot = true
+                alertTitle = "Success"
+                alertMessage = "Your password has been updated."
+                showAlert = true
             }
         } catch {
             await MainActor.run {

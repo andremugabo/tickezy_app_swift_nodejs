@@ -94,8 +94,8 @@ class UserService {
     if (!user) throw new Error('Email not found');
     if (!user.resetOtp) throw new Error('OTP not verified');
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // Assign plaintext; model hook beforeUpdate will hash it
+    user.password = newPassword;
 
     user.resetOtp = null;
     user.resetOtpExpires = null;
