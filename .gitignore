@@ -1,16 +1,16 @@
 # ===========================
 # Node / Backend (tickezy_backend)
 # ===========================
-tickezy_backend/node_modules/
-tickezy_backend/.env
-tickezy_backend/*.log
-tickezy_backend/npm-debug.log*
-tickezy_backend/yarn-debug.log*
-tickezy_backend/dist/
-tickezy_backend/build/
-tickezy_backend/uploads/
-tickezy_backend/package-lock.json
-tickezy_backend/yarn.lock
+./tickezy_backend/node_modules/
+./tickezy_backend/.env
+./tickezy_backend/*.log
+./tickezy_backend/npm-debug.log*
+./tickezy_backend/yarn-debug.log*
+./tickezy_backend/dist/
+./tickezy_backend/build/
+./tickezy_backend/uploads/
+./tickezy_backend/package-lock.json
+./tickezy_backend/yarn.lock
 
 # ===========================
 # iOS / Swift (TICKEZY)
