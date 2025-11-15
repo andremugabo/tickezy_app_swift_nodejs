@@ -109,6 +109,14 @@ DB_DIALECT=postgres
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
 
+# Email (SMTP) for OTP password reset
+# Example (Gmail with App Password):
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_gmail_app_password
+
 # Other settings
 UPLOAD_FOLDER=uploads
 ```
@@ -156,6 +164,9 @@ Endpoints include:
 * `POST /api/users/login` - Log in
 * `GET /api/users/profile` - Get logged-in user's profile
 * `GET /api/users/all` - Get all users (Admin only)
+* `POST /api/users/password/otp` - Send OTP email for password reset
+* `POST /api/users/password/verify-otp` - Verify OTP for password reset
+* `POST /api/users/password/reset` - Reset password after OTP verification
 
 ---
 
@@ -209,6 +220,48 @@ TICKEZY_FULLSTACK/
 ```
 
 ---
+
+## Forgot Password (OTP) Setup & Flow
+
+- Configure SMTP in `.env` (see Backend Environment Variables). For Gmail, use an App Password.
+- Flow:
+  - `POST /api/users/password/otp` with `email` → sends OTP email and stores hashed OTP with expiry.
+  - `POST /api/users/password/verify-otp` with `email`, `otp` → verifies and marks OTP as verified.
+  - `POST /api/users/password/reset` with `email`, `newPassword` → updates password and clears OTP fields.
+- Frontend (iOS):
+  - Screens: `ForgotPasswordView` → `VerifyOtpView` → `ResetPasswordView`.
+  - On success, a popup appears and tapping OK returns to Login automatically.
+
+## Notifications Enum Migration
+
+If you send admin messages as notifications, ensure the DB enum includes `ADMIN_MESSAGE`.
+
+PostgreSQL migration:
+
+```sql
+ALTER TYPE "enum_Notifications_type" ADD VALUE IF NOT EXISTS 'ADMIN_MESSAGE';
+```
+
+Also ensure the iOS enum includes `ADMIN_MESSAGE` and the backend defaults to it when missing.
+
+## App Icon Export (iOS)
+
+- In the iOS app, use `AppIconCanvas.swift` and `IconExporterView.swift` to render/export a 1024x1024 PNG.
+- Steps:
+  - Run the app and open `IconExporterView` screen.
+  - Tap Export to save a PNG to the app’s Documents directory (check Xcode console for file path).
+  - In Xcode, open Assets.xcassets → AppIcon and import the 1024x1024 icon.
+
+## Troubleshooting
+
+- Password not updating after reset:
+  - Fixed by letting Sequelize model hook hash the password on update (avoid double hashing in service layer).
+  - Make sure you Verify OTP before calling Reset; backend checks `resetOtp` is present.
+- OTP email fails:
+  - Verify SMTP env vars and restart the backend.
+  - Check backend logs for detailed error from Nodemailer.
+- Event fetch shows “Error cancelled”:
+  - Handled in iOS by ignoring `URLError.cancelled` in EventService.
 
 ## Contributing
 
