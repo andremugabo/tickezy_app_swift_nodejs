@@ -91,6 +91,62 @@ class AuthService: ObservableObject {
         let data: User
     }
     
+    // MARK: - Password Reset (OTP)
+    
+    func sendPasswordOtp(email: String) async throws {
+        guard let url = URL(string: baseURL + "/password/otp") else { throw URLError(.badURL) }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = ["email": email]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await urlSession.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        if http.statusCode != 200 {
+            if let err = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                throw AuthError.serverError(err.message)
+            }
+            throw AuthError.serverError(String(data: data, encoding: .utf8) ?? "Failed to send OTP")
+        }
+    }
+    
+    func verifyPasswordOtp(email: String, otp: String) async throws {
+        guard let url = URL(string: baseURL + "/password/verify-otp") else { throw URLError(.badURL) }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = ["email": email, "otp": otp]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await urlSession.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        if http.statusCode != 200 {
+            if let err = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                throw AuthError.serverError(err.message)
+            }
+            throw AuthError.serverError(String(data: data, encoding: .utf8) ?? "Failed to verify OTP")
+        }
+    }
+    
+    func resetPassword(email: String, newPassword: String) async throws {
+        guard let url = URL(string: baseURL + "/password/reset") else { throw URLError(.badURL) }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = ["email": email, "newPassword": newPassword]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await urlSession.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        if http.statusCode != 200 {
+            if let err = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                throw AuthError.serverError(err.message)
+            }
+            throw AuthError.serverError(String(data: data, encoding: .utf8) ?? "Failed to reset password")
+        }
+    }
+    
     // MARK: - Validation
     private func validateCredentials(email: String, password: String) throws {
         guard !email.isEmpty, email.contains("@") else {

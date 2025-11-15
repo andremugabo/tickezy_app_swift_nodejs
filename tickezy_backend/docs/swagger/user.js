@@ -57,7 +57,6 @@
  *                   example: User registered successfully
  *                 token:
  *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 data:
  *                   $ref: '#/components/schemas/User'
  *       400:
@@ -103,11 +102,99 @@
  *                   example: Login successful
  *                 token:
  *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 data:
  *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Invalid email or password
+ */
+
+/**
+ * @swagger
+ * /api/users/password/otp:
+ *   post:
+ *     summary: Send password reset OTP to email
+ *     tags: [Users]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: johndoe@example.com
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       404:
+ *         description: Email not found
+ */
+
+/**
+ * @swagger
+ * /api/users/password/verify-otp:
+ *   post:
+ *     summary: Verify password reset OTP
+ *     tags: [Users]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *       400:
+ *         description: Invalid or expired OTP
+ */
+
+/**
+ * @swagger
+ * /api/users/password/reset:
+ *   post:
+ *     summary: Reset password after OTP verification
+ *     tags: [Users]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               newPassword:
+ *                 type: string
+ *                 example: newStrongPassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: OTP not verified
+ *       404:
+ *         description: Email not found
  */
 
 /**
@@ -124,13 +211,7 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized or token missing
  * 
@@ -148,35 +229,18 @@
  *             properties:
  *               name:
  *                 type: string
- *                 example: John Doe Updated
  *               phoneNumber:
  *                 type: string
- *                 example: "+250788888888"
  *     responses:
  *       200:
  *         description: Profile updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Profile updated successfully
- *                 data:
- *                   $ref: '#/components/schemas/User'
- *       401:
- *         description: Unauthorized or token missing
  */
 
 /**
  * @swagger
  * /api/users/device-token:
  *   put:
- *     summary: Update logged-in user's FCM device token
+ *     summary: Update logged-in user's FCM token
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -191,25 +255,11 @@
  *             properties:
  *               fcmToken:
  *                 type: string
- *                 example: fcmToken_example_12345
  *     responses:
  *       200:
  *         description: Device token updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Device token updated successfully
  *       400:
- *         description: FCM token is required
- *       401:
- *         description: Unauthorized or token missing
+ *         description: FCM token required
  */
 
 /**
@@ -223,19 +273,6 @@
  *     responses:
  *       200:
  *         description: List of notifications
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Notification'
- * 
  *   put:
  *     summary: Mark all notifications as read
  *     tags: [Users]
@@ -244,17 +281,6 @@
  *     responses:
  *       200:
  *         description: All notifications marked as read
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: All notifications marked as read
  */
 
 /**
@@ -266,63 +292,33 @@
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
- *           example: 550e8400-e29b-41d4-a716-446655440000
  *     responses:
  *       200:
  *         description: Notification marked as read
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Notification marked as read
- *       404:
- *         description: Notification not found
- * 
  *   delete:
  *     summary: Delete a single notification
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: string
- *           format: uuid
  *     responses:
  *       200:
- *         description: Notification deleted
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Notification deleted
- *       404:
- *         description: Notification not found
+ *         description: Notification deleted successfully
  */
 
 /**
  * @swagger
- * /api/users/all:
+ * /api/users/users:
  *   get:
  *     summary: Get all users (Admin only)
  *     tags: [Users]
@@ -331,88 +327,45 @@
  *     responses:
  *       200:
  *         description: List of all users
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
- *       401:
- *         description: Unauthorized or token missing
  *       403:
- *         description: Access denied (not an admin)
+ *         description: Access denied
  */
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     User:
- *       type: object
- *       properties:
- *         id:
+ * /api/users/users/{id}/notifications:
+ *   post:
+ *     summary: Send a notification to a user (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
  *           type: string
- *           format: uuid
- *           example: 550e8400-e29b-41d4-a716-446655440000
- *         name:
- *           type: string
- *           example: John Doe
- *         email:
- *           type: string
- *           format: email
- *           example: johndoe@example.com
- *         role:
- *           type: string
- *           enum: [ADMIN, CUSTOMER]
- *           example: CUSTOMER
- *         phoneNumber:
- *           type: string
- *           example: "+250788888888"
- *         createdAt:
- *           type: string
- *           format: date-time
- *           example: 2025-10-13T10:00:00.000Z
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           example: 2025-10-13T10:00:00.000Z
- * 
- *     Notification:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *           example: 550e8400-e29b-41d4-a716-446655440000
- *         userId:
- *           type: string
- *           format: uuid
- *           example: 550e8400-e29b-41d4-a716-446655440000
- *         title:
- *           type: string
- *           example: "Ticket Purchased"
- *         message:
- *           type: string
- *           example: "Your ticket for Concert X has been confirmed"
- *         isRead:
- *           type: boolean
- *           example: false
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- * 
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - message
+ *             properties:
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               relatedEventId:
+ *                 type: string
+ *               relatedTicketId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Notification sent successfully
  */

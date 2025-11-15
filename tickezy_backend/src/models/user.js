@@ -29,6 +29,14 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  resetOtp: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetOtpExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   lastLoginAt: DataTypes.DATE,
   phoneNumber: DataTypes.STRING,
   // Optional profile fields

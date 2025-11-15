@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const userController = require('../controller/userController');
+const userController = require('../controller/userController'); 
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 // -------------------------------------------
@@ -9,6 +9,9 @@ const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 // -------------------------------------------
 router.post('/register', userController.register);
 router.post('/login', userController.login);
+router.post('/password/otp', userController.sendPasswordOtp);
+router.post('/password/verify-otp', userController.verifyOtp);
+router.post('/password/reset', userController.resetPassword);
 
 // -------------------------------------------
 // 🔐 Protected Routes (User must be logged in)
