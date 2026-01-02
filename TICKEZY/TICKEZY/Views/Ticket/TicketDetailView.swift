@@ -13,32 +13,57 @@ struct TicketDetailView: View {
     @State private var qrCodeImage: UIImage?
     @State private var brightness: CGFloat = UIScreen.main.brightness
     
+    @State private var isGeneratingPDF = false
+    @State private var pdfURL: URL?
+    @State private var showShareSheet = false
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // QR Code
-                    qrCodeSection
-                    
-                    // Ticket Info
-                    if let event = ticket.Event {
-                        eventInfoSection(event: event)
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // QR Code
+                        qrCodeSection
+                        
+                        // Ticket Info
+                        if let event = ticket.Event {
+                            eventInfoSection(event: event)
+                        }
+                        
+                        // Ticket Details
+                        ticketDetailsSection
                     }
-                    
-                    // Ticket Details
-                    ticketDetailsSection
+                    .padding()
                 }
-                .padding()
+                .background(Color.backgroundPrimary)
+                
+                if isGeneratingPDF {
+                    loadingOverlay
+                }
             }
-            .background(Color.backgroundPrimary)
             .navigationTitle("Ticket Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                    HStack(spacing: 16) {
+                        Button {
+                            generatePDFTicket()
+                        } label: {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundColor(.brandPrimary)
+                        
+                        Button("Done") {
+                            dismiss()
+                        }
+                        .foregroundColor(.brandPrimary)
                     }
-                    .foregroundColor(.brandPrimary)
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = pdfURL {
+                    ShareSheet(activityItems: [url])
                 }
             }
             .onAppear {
@@ -52,6 +77,28 @@ struct TicketDetailView: View {
                 UIScreen.main.brightness = brightness
             }
         }
+    }
+    
+    private var loadingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
+                
+                Text("Generating PDF...")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .padding(40)
+            .background(.ultraThinMaterial)
+            .cornerRadius(20)
+            .shadow(radius: 20)
+        }
+        .transition(.opacity.combined(with: .scale))
     }
     
     private var qrCodeSection: some View {
@@ -118,7 +165,7 @@ struct TicketDetailView: View {
             VStack(spacing: 12) {
                 TicketDetailRow(label: "Ticket ID", value: String(ticket.id.prefix(12)))
                 TicketDetailRow(label: "Quantity", value: "×\(ticket.quantity)")
-                TicketDetailRow(label: "Purchase Date", value: ticket.purchaseDate.formatted(date: .long, time: .shortened))
+                TicketDetailRow(label: "Purchase Date", value: ticket.purchaseDate?.formatted(date: .long, time: .shortened) ?? "Unknown")
                 
                 if let usedAt = ticket.usedAt {
                     TicketDetailRow(label: "Used At", value: usedAt.formatted(date: .long, time: .shortened))
@@ -132,6 +179,36 @@ struct TicketDetailView: View {
         .padding()
         .background(Color.surface)
         .cornerRadius(16)
+    }
+    
+    private func generatePDFTicket() {
+        withAnimation(.spring()) {
+            isGeneratingPDF = true
+        }
+        
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        // Short delay to allow UI to breathe
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            let printableTicket = PrintableTicketView(ticket: ticket, qrCodeImage: qrCodeImage)
+            let fileName = "Tickezy_Ticket_\(ticket.id.prefix(8))"
+            
+            if let url = PDFGenerator.generatePDF(from: printableTicket, fileName: fileName) {
+                self.pdfURL = url
+                self.showShareSheet = true
+                
+                // Success haptic
+                let successGen = UINotificationFeedbackGenerator()
+                successGen.notificationOccurred(.success)
+            }
+            
+            withAnimation {
+                isGeneratingPDF = false
+            }
+        }
     }
     
     private func loadQRCode() {
@@ -218,4 +295,17 @@ struct TicketDetailRow: View {
                 .multilineTextAlignment(.trailing)
         }
     }
+}
+
+// MARK: - Share Sheet Helper
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

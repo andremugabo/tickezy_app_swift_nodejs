@@ -39,8 +39,12 @@ const resetPasswordSchema = Joi.object({
 });
 
 const updateProfileSchema = Joi.object({
-  name: Joi.string().min(2).max(100).optional(),
   phoneNumber: Joi.string().optional(),
+});
+
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required(),
+  newPassword: Joi.string().min(6).required(),
 });
 
 const sendNotificationSchema = Joi.object({
@@ -138,6 +142,14 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 
   const user = await UserService.updateProfile(req.user.id, value);
   res.status(200).json({ success: true, message: 'Profile updated successfully', data: user });
+});
+
+exports.changePassword = asyncHandler(async (req, res) => {
+  const { error, value } = changePasswordSchema.validate(req.body);
+  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+
+  await UserService.changePassword(req.user.id, value.currentPassword, value.newPassword);
+  res.status(200).json({ success: true, message: 'Password changed successfully' });
 });
 
 /**

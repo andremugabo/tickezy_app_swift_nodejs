@@ -85,7 +85,7 @@ struct ProfileView: View {
                 }
             }
             .sheet(isPresented: $showingSettings) {
-                SettingsSheet()
+                SettingsView()
             }
             .sheet(isPresented: $showingChangePassword) {
                 ChangePasswordSheet()
@@ -193,7 +193,7 @@ struct ProfileView: View {
             
             StatPill(
                 title: "Spent",
-                value: "$\(String(format: "%.2f", statsSpent))",
+                value: "\(Int(statsSpent)) Frw",
                 icon: "creditcard.fill"
             )
         }
@@ -531,7 +531,7 @@ struct StatPill: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
 }
@@ -583,9 +583,13 @@ struct ActionButton: View {
 struct EditProfileSheet: View {
     let profile: User
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var auth: AuthService
+    @StateObject private var userService = UserService.shared
     
     @State private var name: String
     @State private var phoneNumber: String
+    @State private var isSaving = false
+    @State private var errorMessage: String?
     
     init(profile: User) {
         self.profile = profile
@@ -595,25 +599,100 @@ struct EditProfileSheet: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Personal Information") {
-                    TextField("Name", text: $name)
-                        .foregroundColor(.textPrimary)
-                    TextField("Phone Number", text: $phoneNumber)
-                        .keyboardType(.phonePad)
-                        .foregroundColor(.textPrimary)
-                }
-                .listRowBackground(Color.surface.opacity(0.5))
+            ZStack {
+                Color.backgroundPrimary.ignoresSafeArea()
                 
-                Section("Email") {
-                    Text(profile.email)
-                        .foregroundColor(.textSecondary)
+                ScrollView {
+                    VStack(spacing: 32) {
+                        // Avatar Section
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.brandGradient)
+                                    .frame(width: 120, height: 120)
+                                    .shadow(color: .brandPrimary.opacity(0.3), radius: 10, x: 0, y: 5)
+                                
+                                Text(name.prefix(1).uppercased())
+                                    .font(.system(size: 50, weight: .bold))
+                                    .foregroundColor(.white)
+                                
+                                Button {
+                                    // Placeholder for image picker functionality
+                                } label: {
+                                    Circle()
+                                        .fill(Color.surfaceAlt)
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            Image(systemName: "camera.fill")
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.brandPrimary)
+                                        )
+                                        .shadow(radius: 4)
+                                }
+                                .offset(x: 40, y: 40)
+                            }
+                            
+                            Text("Change Profile Picture")
+                                .font(.caption.bold())
+                                .foregroundColor(.brandPrimary)
+                        }
+                        .padding(.top, 24)
+                        
+                        // Form Fields
+                        VStack(spacing: 24) {
+                            CustomEditField(
+                                label: "Full Name",
+                                icon: "person.fill",
+                                placeholder: "Enter your name",
+                                text: $name
+                            )
+                            
+                            CustomEditField(
+                                label: "Phone Number",
+                                icon: "phone.fill",
+                                placeholder: "Enter phone number",
+                                text: $phoneNumber,
+                                keyboardType: .phonePad
+                            )
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Email Address")
+                                    .font(.caption.bold())
+                                    .foregroundColor(.textTertiary)
+                                    .padding(.leading, 4)
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "envelope.fill")
+                                        .foregroundColor(.textTertiary)
+                                        .frame(width: 20)
+                                    
+                                    Text(profile.email)
+                                        .font(.subheadline)
+                                        .foregroundColor(.textTertiary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "lock.fill")
+                                        .font(.caption2)
+                                        .foregroundColor(.textTertiary)
+                                }
+                                .padding()
+                                .background(Color.surface.opacity(0.5))
+                                .cornerRadius(12)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(.stateError)
+                                .padding(.horizontal)
+                        }
+                    }
+                    .padding(.bottom, 100)
                 }
-                .listRowBackground(Color.surface.opacity(0.5))
             }
-            .tint(.brandPrimary)
-            .scrollContentBackground(.hidden)
-            .background(Color.backgroundPrimary)
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -625,74 +704,77 @@ struct EditProfileSheet: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        // Handle save
-                        dismiss()
+                    Button {
+                        Task { await saveChanges() }
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.brandPrimary)
+                        } else {
+                            Text("Save")
+                                .fontWeight(.bold)
+                                .foregroundColor(.brandPrimary)
+                        }
                     }
-                    .foregroundColor(.brandPrimary)
-                    .fontWeight(.semibold)
+                    .disabled(isSaving || name.isEmpty)
                 }
             }
+        }
+    }
+    
+    private func saveChanges() async {
+        guard let token = auth.token else { return }
+        isSaving = true
+        errorMessage = nil
+        
+        do {
+            try await userService.updateProfile(name: name, phoneNumber: phoneNumber, token: token)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isSaving = false
+    }
+}
+
+struct CustomEditField: View {
+    let label: String
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboardType: UIKeyboardType = .default
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(.textSecondary)
+                .padding(.leading, 4)
+            
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.brandPrimary)
+                    .frame(width: 20)
+                
+                TextField(placeholder, text: $text)
+                    .font(.subheadline)
+                    .foregroundColor(.textPrimary)
+                    .keyboardType(keyboardType)
+                    .tint(.brandPrimary)
+            }
+            .padding()
+            .background(Color.surfaceAlt)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.brandBorder.opacity(0.5), lineWidth: 1)
+            )
         }
     }
 }
 
-struct SettingsSheet: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var notificationsEnabled = true
-    @State private var emailNotifications = true
-    @State private var pushNotifications = true
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Notifications") {
-                    Toggle("Enable Notifications", isOn: $notificationsEnabled)
-                    Toggle("Email Notifications", isOn: $emailNotifications)
-                        .disabled(!notificationsEnabled)
-                    Toggle("Push Notifications", isOn: $pushNotifications)
-                        .disabled(!notificationsEnabled)
-                }
-                .listRowBackground(Color.surface.opacity(0.5))
-                
-                Section("Preferences") {
-                    NavigationLink("Language") {
-                        Text("Language settings coming soon")
-                            .foregroundColor(.textSecondary)
-                    }
-                    NavigationLink("Privacy") {
-                        Text("Privacy settings coming soon")
-                            .foregroundColor(.textSecondary)
-                    }
-                }
-                .listRowBackground(Color.surface.opacity(0.5))
-                
-                Section("About") {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("1.0.0")
-                            .foregroundColor(.textSecondary)
-                    }
-                }
-                .listRowBackground(Color.surface.opacity(0.5))
-            }
-            .tint(.brandPrimary)
-            .scrollContentBackground(.hidden)
-            .background(Color.backgroundPrimary)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .foregroundColor(.brandPrimary)
-                }
-            }
-        }
-    }
-}
+
 
 // MARK: - Preview
 #Preview {
@@ -703,47 +785,215 @@ struct SettingsSheet: View {
 // MARK: - Change Password Sheet (placeholder)
 struct ChangePasswordSheet: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var auth: AuthService
+    @StateObject private var userService = UserService.shared
+    
     @State private var currentPassword = ""
     @State private var newPassword = ""
     @State private var confirmPassword = ""
     @State private var isSaving = false
+    @State private var errorMessage: String?
+    @State private var showSuccessFeedback = false
+    
+    var passwordsMatch: Bool {
+        !newPassword.isEmpty && newPassword == confirmPassword
+    }
+    
+    var canSave: Bool {
+        !currentPassword.isEmpty && passwordsMatch && newPassword.count >= 6
+    }
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Current Password") {
-                    SecureField("Current Password", text: $currentPassword)
-                        .foregroundColor(.textPrimary)
-                }
-                .listRowBackground(Color.surface.opacity(0.5))
+            ZStack {
+                Color.backgroundPrimary.ignoresSafeArea()
                 
-                Section("New Password") {
-                    SecureField("New Password", text: $newPassword)
-                        .foregroundColor(.textPrimary)
-                    SecureField("Confirm Password", text: $confirmPassword)
-                        .foregroundColor(.textPrimary)
+                ScrollView {
+                    VStack(spacing: 32) {
+                        // Header Illustration/Icon
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.brandGradient)
+                                    .frame(width: 80, height: 80)
+                                    .shadow(color: .brandPrimary.opacity(0.3), radius: 10, x: 0, y: 5)
+                                
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 36))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            VStack(spacing: 8) {
+                                Text("Secure Your Account")
+                                    .font(.title3.bold())
+                                    .foregroundColor(.textPrimary)
+                                
+                                Text("Enter your current password and choose a strong new one.")
+                                    .font(.subheadline)
+                                    .foregroundColor(.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
+                            }
+                        }
+                        .padding(.top, 24)
+                        
+                        // Input Fields
+                        VStack(spacing: 24) {
+                            CustomSecureEditField(
+                                label: "Current Password",
+                                icon: "key.fill",
+                                placeholder: "Enter current password",
+                                text: $currentPassword
+                            )
+                            
+                            Divider()
+                                .background(Color.divider)
+                                .padding(.vertical, 8)
+                            
+                            CustomSecureEditField(
+                                label: "New Password",
+                                icon: "lock.fill",
+                                placeholder: "At least 6 characters",
+                                text: $newPassword
+                            )
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                CustomSecureEditField(
+                                    label: "Confirm New Password",
+                                    icon: "checkmark.shield.fill",
+                                    placeholder: "Re-type new password",
+                                    text: $confirmPassword
+                                )
+                                
+                                if !confirmPassword.isEmpty {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: passwordsMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                        Text(passwordsMatch ? "Passwords match" : "Passwords do not match")
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(passwordsMatch ? .stateSuccess : .stateError)
+                                    .padding(.leading, 4)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(.stateError)
+                                .padding(.horizontal)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding(.bottom, 40)
                 }
-                .listRowBackground(Color.surface.opacity(0.5))
+                
+                if showSuccessFeedback {
+                    successOverlay
+                }
             }
-            .tint(.brandPrimary)
-            .scrollContentBackground(.hidden)
-            .background(Color.backgroundPrimary)
             .navigationTitle("Change Password")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                         .foregroundColor(.textSecondary)
+                        .disabled(isSaving)
                 }
+                
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(isSaving ? "Saving..." : "Save") {
-                        // TODO: Hook up to AuthService change password endpoint when available
-                        dismiss()
+                    Button {
+                        Task { await performChange() }
+                    } label: {
+                        if isSaving {
+                            ProgressView().tint(.brandPrimary)
+                        } else {
+                            Text("Update")
+                                .fontWeight(.bold)
+                                .foregroundColor(canSave ? .brandPrimary : .textTertiary)
+                        }
                     }
-                    .disabled(isSaving)
-                    .foregroundColor(.brandPrimary)
+                    .disabled(!canSave || isSaving)
                 }
             }
+        }
+    }
+    
+    private var successOverlay: some View {
+        ZStack {
+            Color.backgroundPrimary.opacity(0.9)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 70))
+                    .foregroundColor(.stateSuccess)
+                
+                Text("Success!")
+                    .font(.title2.bold())
+                    .foregroundColor(.textPrimary)
+                
+                Text("Your password has been updated.")
+                    .font(.subheadline)
+                    .foregroundColor(.textSecondary)
+            }
+            .padding(40)
+            .background(Color.surface)
+            .cornerRadius(24)
+            .shadow(radius: 20)
+        }
+        .transition(.scale.combined(with: .opacity))
+    }
+    
+    private func performChange() async {
+        guard let token = auth.token else { return }
+        isSaving = true
+        errorMessage = nil
+        
+        do {
+            try await userService.changePassword(current: currentPassword, new: newPassword, token: token)
+            withAnimation { showSuccessFeedback = true }
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isSaving = false
+    }
+}
+
+struct CustomSecureEditField: View {
+    let label: String
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(.textSecondary)
+                .padding(.leading, 4)
+            
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.brandPrimary)
+                    .frame(width: 20)
+                
+                SecureField(placeholder, text: $text)
+                    .font(.subheadline)
+                    .foregroundColor(.textPrimary)
+                    .tint(.brandPrimary)
+            }
+            .padding()
+            .background(Color.surfaceAlt)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.brandBorder.opacity(0.5), lineWidth: 1)
+            )
         }
     }
 }

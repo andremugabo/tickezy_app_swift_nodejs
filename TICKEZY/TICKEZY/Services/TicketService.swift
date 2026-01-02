@@ -24,7 +24,7 @@ class TicketService: ObservableObject {
     
     struct CreateTicketResponse: Codable {
         let message: String
-        let ticket: Ticket
+        let tickets: [Ticket]
     }
     
     struct TicketResponse: Codable {
@@ -66,8 +66,7 @@ class TicketService: ObservableObject {
             
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 
                 // Backend returns array directly, not wrapped
                 self.tickets = try decoder.decode([Ticket].self, from: data)
@@ -98,8 +97,7 @@ class TicketService: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 self.tickets = try decoder.decode([Ticket].self, from: data)
                 self.errorMessage = nil
             default:
@@ -116,7 +114,7 @@ class TicketService: ObservableObject {
     
     // MARK: - Purchase Ticket
     
-    func purchaseTicket(eventId: String, quantity: Int, token: String) async throws {
+    func purchaseTicket(eventId: String, quantity: Int, paymentMethod: String, token: String) async throws {
         guard let url = URL(string: baseURL) else {
             throw URLError(.badURL)
         }
@@ -128,7 +126,8 @@ class TicketService: ObservableObject {
         
         let body: [String: Any] = [
             "eventId": eventId,
-            "quantity": quantity
+            "quantity": quantity,
+            "paymentMethod": paymentMethod
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -143,8 +142,7 @@ class TicketService: ObservableObject {
         
         switch httpResponse.statusCode {
         case 201:
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
             let result = try decoder.decode(CreateTicketResponse.self, from: data)
             print("✅ Ticket purchased: \(result.message)")
             self.errorMessage = nil
@@ -157,43 +155,24 @@ class TicketService: ObservableObject {
         }
     }
     
-    // MARK: - Get Ticket by ID
-    
-    func fetchTicketById(_ id: String, token: String) async {
-        do {
-            guard let url = URL(string: "\(baseURL)/\(id)") else {
-                throw URLError(.badURL)
+    // MARK: - Get Ticket by ID (Direct Return)
+    func getTicketById(id: String, token: String) async throws -> Ticket {
+        guard let url = URL(string: "\(baseURL)/\(id)") else { throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        
+        guard httpResponse.statusCode == 200 else {
+            if let errorResponse = try? JSONDecoder().decode(MessageResponse.self, from: data) {
+                throw NSError(domain: "", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.message])
             }
-            
-            var request = URLRequest(url: url)
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw URLError(.badServerResponse)
-            }
-            
-            print("📋 Fetch Ticket by ID Status:", httpResponse.statusCode)
-            
-            switch httpResponse.statusCode {
-            case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                
-                // Backend returns ticket directly
-                self.selectedTicket = try decoder.decode(Ticket.self, from: data)
-                self.errorMessage = nil
-            default:
-                if let errorResponse = try? JSONDecoder().decode(MessageResponse.self, from: data) {
-                    self.errorMessage = errorResponse.message
-                } else {
-                    self.errorMessage = "Failed to fetch ticket"
-                }
-            }
-        } catch {
-            print("❌ Fetch ticket error:", error)
-            self.errorMessage = error.localizedDescription
+            throw URLError(.badServerResponse)
         }
+        
+        return try JSONDecoder.tickezyDecoder.decode(Ticket.self, from: data)
     }
     
     // MARK: - Update Ticket Status (Admin/Staff only)

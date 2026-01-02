@@ -46,7 +46,7 @@ struct PaymentDetailView: View {
                 .font(.title3.bold())
                 .foregroundColor(statusColor)
 
-            Text("$\(payment.amount, specifier: "%.2f")")
+            Text("\(Int(payment.amount)) Frw")
                 .font(.title.bold())
                 .foregroundColor(.textPrimary)
 

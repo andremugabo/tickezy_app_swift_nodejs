@@ -141,7 +141,7 @@ struct LoginView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            focusedField == .email ? Color.brandPrimary : Color.border,
+                            focusedField == .email ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .email ? 2 : 1
                         )
                 )
@@ -189,7 +189,7 @@ struct LoginView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            focusedField == .password ? Color.brandPrimary : Color.border,
+                            focusedField == .password ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .password ? 2 : 1
                         )
                 )

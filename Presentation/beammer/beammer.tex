@@ -1,0 +1,333 @@
+\documentclass[aspectratio=169]{beamer}
+
+% ---------------------------
+% Theme & Base
+% ---------------------------
+\usetheme{Madrid}
+\setbeamertemplate{navigation symbols}{}
+\usefonttheme{professionalfonts}
+
+% ---------------------------
+% Packages
+% ---------------------------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{pgfpages}
+\usepackage{xcolor}
+
+% ---------------------------
+% Speaker Notes
+% ---------------------------
+\setbeameroption{show notes on second screen=right}
+
+% ---------------------------
+% Tickezy Color Palette
+% ---------------------------
+\definecolor{tickezyNavy}{HTML}{0A1F44}
+\definecolor{tickezyNavyLight}{HTML}{0D2A5C}
+\definecolor{tickezyCyan}{HTML}{3BC9F5}
+\definecolor{tickezyGray}{HTML}{C7D2E0}
+
+% ---------------------------
+% Beamer Color Customization
+% ---------------------------
+\setbeamercolor{background canvas}{bg=tickezyNavy}
+\setbeamercolor{normal text}{fg=white}
+\setbeamercolor{frametitle}{bg=tickezyNavyLight, fg=white}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{structure}{fg=tickezyCyan}
+\setbeamercolor{itemize item}{fg=tickezyCyan}
+
+\setbeamercolor{block title}{bg=tickezyNavyLight, fg=white}
+\setbeamercolor{block body}{bg=tickezyNavy!90, fg=white}
+
+% ---------------------------
+% Title Info
+% ---------------------------
+\title[TICKEZY]{\Huge \textbf{TICKEZY}}
+\subtitle{\textcolor{tickezyCyan}{Event • Ticket • Moment}}
+\author{UMURERWA Lisa Ornella \\ MUGABO Andr\'e}
+\institute{SwiftUI Pitch Presentation}
+\date{\today}
+
+% ---------------------------
+% Document
+% ---------------------------
+\begin{document}
+
+% ---------------------------
+% Custom Title Slide
+% ---------------------------
+\begin{frame}[plain]
+\vspace{1.2cm}
+\centering
+
+{\Huge \textbf{TICKEZY}}
+
+\vspace{0.3cm}
+{\Large \textcolor{tickezyCyan}{Event • Ticket • Moment}}
+
+\vspace{1cm}
+{\large A Real-World Ticketing App Built with Swift \& SwiftUI}
+
+\vspace{1cm}
+\textcolor{tickezyGray}{
+UMURERWA Lisa Ornella \\
+MUGABO Andr\'e
+}
+
+\vfill
+\textcolor{tickezyGray}{SwiftUI Pitch Presentation}
+
+\note{
+Lisa: Good morning. We are UMURERWA Lisa Ornella and MUGABO André.
+Today we are presenting Tickezy, a real-world ticketing application
+built using Swift and SwiftUI.
+}
+\end{frame}
+
+% ---------------------------
+% Pitch Focus
+% ---------------------------
+\begin{frame}{Pitch Focus}
+\begin{block}{Core Message}
+\centering
+\textit{Tickezy proves our ability to design, architect, and build real-world iOS applications using Swift and SwiftUI.}
+\end{block}
+
+\note{
+Lisa: This presentation focuses on how we used SwiftUI
+to build a clean, modern, and scalable iOS application.
+}
+\end{frame}
+
+% ---------------------------
+% Problem
+% ---------------------------
+\begin{frame}{The Problem}
+\begin{itemize}
+  \item Buying event tickets is often slow or confusing
+  \item Users expect fast, smooth, native mobile apps
+\end{itemize}
+
+\vspace{0.4cm}
+\textcolor{tickezyGray}{
+\textbf{Opportunity:} Build a simple and intuitive ticketing experience using SwiftUI.
+}
+
+\note{
+Lisa: Many platforms feel complex.
+SwiftUI helped us focus on clarity and user experience.
+}
+\end{frame}
+
+% ---------------------------
+% SwiftUI Lifecycle
+% ---------------------------
+\begin{frame}{SwiftUI App Lifecycle}
+\begin{itemize}
+  \item Modern \texttt{@main} app entry point
+  \item Scene-based lifecycle
+  \item No storyboards
+\end{itemize}
+
+\note{
+Lisa: Tickezy uses the modern SwiftUI lifecycle,
+which simplifies state and navigation management.
+}
+\end{frame}
+
+% ---------------------------
+% SwiftUI Views
+% ---------------------------
+\begin{frame}{SwiftUI Views}
+\begin{itemize}
+  \item NavigationStack
+  \item List and ScrollView
+  \item Reusable UI components
+\end{itemize}
+
+\vspace{0.3cm}
+\textcolor{tickezyGray}{
+Declarative and state-driven user interface.
+}
+
+\note{
+Lisa: SwiftUI allows us to describe the UI declaratively.
+The UI reacts automatically to state changes.
+}
+\end{frame}
+
+% ---------------------------
+% Splash Screen
+% ---------------------------
+\begin{frame}{SwiftUI First Impression}
+\centering
+\includegraphics[height=6cm]{tickezy_splash.png}
+
+\vspace{0.3cm}
+\textcolor{tickezyGray}{A clean, modern SwiftUI splash screen}
+
+\note{
+Lisa: This is the Tickezy splash screen.
+It introduces the app’s branding and provides
+a calm and modern first impression.
+}
+\end{frame}
+
+% ---------------------------
+% UI Showcase
+% ---------------------------
+\begin{frame}{SwiftUI Interface Showcase}
+\centering
+\includegraphics[height=5cm]{event_list.png}
+\hspace{0.6cm}
+\includegraphics[height=5cm]{ticket_view.png}
+
+\vspace{0.3cm}
+\textcolor{tickezyGray}{Event discovery and ticket details built with SwiftUI}
+
+\note{
+Lisa: On the left is the event list built using NavigationStack and reusable components.
+On the right is the ticket detail screen showing ticket information clearly.
+}
+\end{frame}
+
+% ---------------------------
+% MVVM
+% ---------------------------
+\begin{frame}{MVVM Architecture}
+\begin{columns}
+\column{0.33\textwidth}
+\textbf{Model}
+\begin{itemize}
+  \item Swift structs
+  \item Codable
+\end{itemize}
+
+\column{0.33\textwidth}
+\textbf{View}
+\begin{itemize}
+  \item SwiftUI only
+\end{itemize}
+
+\column{0.33\textwidth}
+\textbf{ViewModel}
+\begin{itemize}
+  \item State and logic
+\end{itemize}
+\end{columns}
+
+\note{
+André: MVVM separates UI from business logic,
+making the app scalable and easy to maintain.
+}
+\end{frame}
+
+% ---------------------------
+% State
+% ---------------------------
+\begin{frame}{State Management}
+\begin{itemize}
+  \item @State
+  \item @Published
+  \item ObservableObject
+\end{itemize}
+
+\note{
+André: SwiftUI listens to state changes
+and updates the UI automatically.
+}
+\end{frame}
+
+% ---------------------------
+% Networking
+% ---------------------------
+\begin{frame}{Networking in Swift}
+\begin{itemize}
+  \item URLSession
+  \item Codable
+  \item Asynchronous data loading
+\end{itemize}
+
+\note{
+André: When data arrives from the backend,
+SwiftUI refreshes the interface automatically.
+}
+\end{frame}
+
+% ---------------------------
+% Backend to UX
+% ---------------------------
+\begin{frame}{Backend Supporting SwiftUI UX}
+\begin{table}
+\centering
+\begin{tabular}{ll}
+\toprule
+Feature & SwiftUI Impact \\
+\midrule
+Authentication & Secure login flow \\
+QR Code & Digital ticket display \\
+PDF Ticket & Downloadable passes \\
+Email & Confirmation feedback \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\note{
+André: Backend services exist to support
+a smooth and responsive SwiftUI experience.
+}
+\end{frame}
+
+% ---------------------------
+% Demo
+% ---------------------------
+\begin{frame}{Live Demo}
+\centering
+\Huge Demo Time
+
+\vspace{0.4cm}
+\Large
+Browse Events → Buy Ticket → Display QR Code
+
+\note{
+Both: We will now demonstrate the app.
+Focus on smooth navigation and user experience.
+}
+\end{frame}
+
+% ---------------------------
+% Challenges
+% ---------------------------
+\begin{frame}{Challenges \& Lessons}
+\begin{itemize}
+  \item Managing asynchronous data
+  \item Designing with state-driven UI
+\end{itemize}
+
+\note{
+Lisa: SwiftUI taught us to think in terms of state
+rather than traditional screen-based UI.
+}
+\end{frame}
+
+% ---------------------------
+% Conclusion
+% ---------------------------
+\begin{frame}{Conclusion}
+\begin{block}{Final Message}
+Tickezy demonstrates our ability to build scalable, real-world iOS applications using Swift and SwiftUI.
+\end{block}
+
+\vspace{0.3cm}
+\centering
+Thank you — we are happy to answer questions or continue the demo.
+
+\note{
+Both: Thank the audience and invite questions.
+}
+\end{frame}
+
+\end{document}

@@ -85,8 +85,7 @@ class EventService: ObservableObject {
 
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 let result = try decoder.decode(EventsResponse.self, from: data)
                 self.events = result.data
                 self.pagination = result.pagination
@@ -111,6 +110,28 @@ class EventService: ObservableObject {
     }
 
 
+    // MARK: - Fetch single event by ID (Direct Return)
+    func getEventById(id: String) async throws -> Event {
+        guard let url = URL(string: "\(baseURL)/\(id)") else { throw URLError(.badURL) }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        
+        guard httpResponse.statusCode == 200 else {
+            if let errorResponse = try? JSONDecoder().decode(BackendErrorResponse.self, from: data) {
+                throw NSError(domain: "", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorResponse.message])
+            }
+            throw URLError(.badServerResponse)
+        }
+        
+        let result = try JSONDecoder.tickezyDecoder.decode(EventResponse.self, from: data)
+        return result.data
+    }
+
     // MARK: - Fetch single event by ID
     func fetchEventById(_ id: String) async {
         do {
@@ -125,8 +146,7 @@ class EventService: ObservableObject {
 
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 let result = try decoder.decode(EventResponse.self, from: data)
                 self.selectedEvent = result.data
             default:

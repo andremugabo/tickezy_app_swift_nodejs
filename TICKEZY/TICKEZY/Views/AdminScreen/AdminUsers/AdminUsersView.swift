@@ -403,7 +403,7 @@ struct UserCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
 }
@@ -640,7 +640,7 @@ struct UserDetailSheet: View {
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.border, lineWidth: 1)
+                                    .stroke(Color.brandBorder, lineWidth: 1)
                             )
                             .foregroundColor(.textPrimary)
                             .tint(.brandPrimary)
@@ -658,7 +658,7 @@ struct UserDetailSheet: View {
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.border, lineWidth: 1)
+                                    .stroke(Color.brandBorder, lineWidth: 1)
                             )
                             .foregroundColor(.textPrimary)
                             .tint(.brandPrimary)
@@ -685,7 +685,7 @@ struct UserDetailSheet: View {
                 }
                 .safeAreaInset(edge: .bottom) {
                     VStack(spacing: 0) {
-                        Divider().background(Color.border)
+                        Divider().background(Color.brandBorder)
                         Button {
                             Task { await send() }
                         } label: {

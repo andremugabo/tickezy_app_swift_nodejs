@@ -433,7 +433,7 @@ struct EventCardView: View {
                             Text("Price")
                                 .font(.caption2)
                                 .foregroundColor(.textTertiary)
-                            Text("$\(String(format: "%.2f", event.price))")
+                            Text("\(Int(event.price)) Frw")
                                 .font(.headline)
                                 .foregroundColor(.brandPrimary)
                         }
@@ -456,7 +456,7 @@ struct EventCardView: View {
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.border, lineWidth: 1)
+                    .stroke(Color.brandBorder, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         }
@@ -702,7 +702,7 @@ struct EventDetailView: View {
                             Text("Ticket Price")
                                 .font(.subheadline)
                                 .foregroundColor(.textSecondary)
-                            Text("$\(String(format: "%.2f", event.price))")
+                            Text("\(Int(event.price)) Frw")
                                 .font(.title2.bold())
                                 .foregroundColor(.brandPrimary)
                         }
@@ -814,6 +814,8 @@ struct TicketPurchaseView: View {
     @State private var errorMessage = ""
     @State private var showSuccess = false
     
+    @State private var paymentMethod = "CREDIT_CARD"
+    
     var totalPrice: Double {
         Double(quantity) * event.price
     }
@@ -898,13 +900,31 @@ struct TicketPurchaseView: View {
                     .background(Color.surface)
                     .cornerRadius(12)
                     
+                    // Payment Method
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Payment Method")
+                            .font(.headline)
+                            .foregroundColor(.textPrimary)
+                        
+                        Picker("Payment Method", selection: $paymentMethod) {
+                            Text("Credit Card").tag("CREDIT_CARD")
+                            Text("Mobile Money").tag("MOBILE_MONEY")
+                            Text("PayPal").tag("PAYPAL")
+                            Text("Cash").tag("CASH")
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .padding()
+                    .background(Color.surface)
+                    .cornerRadius(12)
+                    
                     // Price Summary
                     VStack(spacing: 12) {
                         HStack {
                             Text("Price per ticket")
                                 .foregroundColor(.textSecondary)
                             Spacer()
-                            Text("$\(String(format: "%.2f", event.price))")
+                            Text("\(Int(event.price)) Frw")
                                 .foregroundColor(.textPrimary)
                         }
                         
@@ -923,7 +943,7 @@ struct TicketPurchaseView: View {
                                 .font(.headline)
                                 .foregroundColor(.textPrimary)
                             Spacer()
-                            Text("$\(String(format: "%.2f", totalPrice))")
+                            Text("\(Int(totalPrice)) Frw")
                                 .font(.title2.bold())
                                 .foregroundColor(.brandPrimary)
                         }
@@ -1012,6 +1032,7 @@ struct TicketPurchaseView: View {
             try await TicketService.shared.purchaseTicket(
                 eventId: event.id,
                 quantity: quantity,
+                paymentMethod: paymentMethod,
                 token: token
             )
             showSuccess = true

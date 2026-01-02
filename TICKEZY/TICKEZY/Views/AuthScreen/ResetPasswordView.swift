@@ -198,7 +198,7 @@ struct ResetPasswordView: View {
                     .stroke(
                         focusedField == field ?
                         LinearGradient(colors: [Color.brandPrimary, Color.brandAccent], startPoint: .leading, endPoint: .trailing) :
-                        LinearGradient(colors: [Color.border, Color.border], startPoint: .leading, endPoint: .trailing),
+                        LinearGradient(colors: [Color.brandBorder, Color.brandBorder], startPoint: .leading, endPoint: .trailing),
                         lineWidth: focusedField == field ? 2 : 1
                     )
             )

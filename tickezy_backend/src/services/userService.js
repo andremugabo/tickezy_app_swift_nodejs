@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { User, Notification } = require('../models');
 const { sendEmail } = require('../utils/emailService');
 
-const generateToken = (user) => 
+const generateToken = (user) =>
   jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
@@ -119,6 +119,18 @@ class UserService {
 
     await user.save();
     return user;
+  }
+
+  static async changePassword(userId, currentPassword, newPassword) {
+    const user = await User.findByPk(userId);
+    if (!user) throw new Error('User not found');
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) throw new Error('Incorrect current password');
+
+    user.password = newPassword; // Hashing will happen in beforeUpdate hook
+    await user.save();
+    return true;
   }
 
   static async updateFcmToken(userId, fcmToken) {

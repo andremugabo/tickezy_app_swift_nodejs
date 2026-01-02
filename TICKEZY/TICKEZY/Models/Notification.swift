@@ -7,11 +7,11 @@
 
 import Foundation
 
-enum NotificationType: String, Codable {
+enum NotificationType: String, Codable, Hashable {
     case TICKET_CONFIRMATION, EVENT_REMINDER, PAYMENT_SUCCESS, EVENT_UPDATE, ADMIN_MESSAGE
 }
 
-struct Notification: Codable, Identifiable {
+struct Notification: Codable, Identifiable, Hashable {
     let id: String
     let userId: String
     let title: String

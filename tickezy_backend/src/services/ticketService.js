@@ -38,14 +38,14 @@ async function createTicket({ userId, eventId, quantity = 1, checkedInBy }) {
   try {
     await Notification.create({
       userId,
-      title: 'Ticket Confirmed',
-      message: `Your ticket for ${event.title} is confirmed. Quantity: ${quantity}.`,
+      title: 'Ticket Confirmed! 🎉',
+      message: `Your purchase for ${event.title} was successful. You have ${quantity} ticket(s) ready!`,
       type: 'TICKET_CONFIRMATION',
       timestamp: new Date(),
       relatedEventId: eventId,
       relatedTicketId: ticket.id,
     });
-  } catch (_) {}
+  } catch (_) { }
 
   return ticket;
 }

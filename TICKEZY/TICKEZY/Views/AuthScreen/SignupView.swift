@@ -142,7 +142,7 @@ struct SignupView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
-                            focusedField == .name ? Color.brandPrimary : Color.border,
+                            focusedField == .name ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .name ? 2 : 1
                         )
                 )
@@ -177,7 +177,7 @@ struct SignupView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
-                            focusedField == .email ? Color.brandPrimary : Color.border,
+                            focusedField == .email ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .email ? 2 : 1
                         )
                 )
@@ -227,7 +227,7 @@ struct SignupView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
-                            focusedField == .password ? Color.brandPrimary : Color.border,
+                            focusedField == .password ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .password ? 2 : 1
                         )
                 )
@@ -276,7 +276,7 @@ struct SignupView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(
-                            focusedField == .phone ? Color.brandPrimary : Color.border,
+                            focusedField == .phone ? Color.brandPrimary : Color.brandBorder,
                             lineWidth: focusedField == .phone ? 2 : 1
                         )
                 )

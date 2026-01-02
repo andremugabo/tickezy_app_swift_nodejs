@@ -7,24 +7,24 @@
 
 import Foundation
 
-enum TicketStatus: String, Codable, CaseIterable {
+enum TicketStatus: String, Codable, CaseIterable, Hashable {
     case VALID
     case USED
     case CANCELLED
     case REFUNDED
 }
 
-struct Ticket: Codable, Identifiable {
+struct Ticket: Codable, Identifiable, Hashable {
     let id: String
     let userId: String
     let eventId: String
-    let purchaseDate: Date
+    let purchaseDate: Date?
     let quantity: Int
     let qrCodeURL: String?
     var status: TicketStatus
     var usedAt: Date?
     var checkedInBy: String?
-    let createdAt: Date
+    let createdAt: Date?
     let updatedAt: Date?
     
     // Related event (if included from backend)

@@ -263,7 +263,7 @@ struct AdminEventCard: View {
                         Text("Price")
                             .font(.caption2)
                             .foregroundColor(.textTertiary)
-                        Text("$\(String(format: "%.2f", event.price))")
+                        Text("\(Int(event.price)) Frw")
                             .font(.subheadline.bold())
                             .foregroundColor(.brandPrimary)
                     }
@@ -334,7 +334,7 @@ struct AdminEventCard: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
     

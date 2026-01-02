@@ -69,7 +69,7 @@ extension Color {
     static let buttonPrimaryText   = Color.white
     static let buttonSecondary     = surface
     static let buttonSecondaryText = textPrimary
-    static let border              = brandPrimary.opacity(0.3)
+    static let brandBorder         = brandPrimary.opacity(0.3)
     static let divider             = Color.white.opacity(0.12)
     static let overlay             = Color.black.opacity(0.4)
     
@@ -89,7 +89,8 @@ extension Color {
     @available(*, deprecated, renamed: "stateSuccess") static let successGreen = stateSuccess
     @available(*, deprecated, renamed: "stateWarning") static let warningYellow = stateWarning
     @available(*, deprecated, renamed: "surface")      static let cardBackground = surface
-    @available(*, deprecated, renamed: "border")       static let borderColor    = border
+    @available(*, deprecated, renamed: "brandBorder")  static let border         = brandBorder
+    @available(*, deprecated, renamed: "brandBorder")  static let borderColor    = brandBorder
     
     // MARK: - Helper Methods
     func lighter(by percentage: CGFloat = 0.2) -> Color {

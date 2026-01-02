@@ -72,7 +72,7 @@ struct TicketCardView: View {
                             Text("Purchased")
                                 .font(.caption)
                                 .foregroundColor(.textTertiary)
-                            Text(ticket.purchaseDate.formatted(date: .abbreviated, time: .omitted))
+                            Text(ticket.purchaseDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.textPrimary)
                         }
@@ -100,7 +100,7 @@ struct TicketCardView: View {
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
     

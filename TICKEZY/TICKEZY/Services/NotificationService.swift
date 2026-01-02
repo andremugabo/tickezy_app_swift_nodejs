@@ -55,25 +55,30 @@ class NotificationService: ObservableObject {
     func fetchNotifications(token: String) async {
         do {
             guard let url = URL(string: "\(baseURL)/notifications") else { throw URLError(.badURL) }
+            
             var request = URLRequest(url: url)
+            request.httpMethod = "GET"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            
             let (data, resp) = try await URLSession.shared.data(for: request)
             guard let http = resp as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            
             switch http.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                let result = try decoder.decode(NotificationsResponse.self, from: data)
+                let result = try JSONDecoder.tickezyDecoder.decode(NotificationsResponse.self, from: data)
                 self.notifications = result.data
                 self.errorMessage = nil
             default:
                 if let err = try? JSONDecoder().decode(MessageResponse.self, from: data) {
                     self.errorMessage = err.message
                 } else {
-                    self.errorMessage = "Failed to fetch notifications"
+                    let message = String(data: data, encoding: .utf8) ?? "Failed to fetch notifications"
+                    self.errorMessage = message
                 }
             }
         } catch {
+            print("❌ Notification Fetch Error: \(error)")
             self.errorMessage = error.localizedDescription
         }
     }

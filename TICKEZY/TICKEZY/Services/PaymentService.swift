@@ -68,8 +68,7 @@ class PaymentService: ObservableObject {
         
         switch httpResponse.statusCode {
         case 201:
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
+            let decoder = JSONDecoder.tickezyDecoder
             let result = try decoder.decode(CreatePaymentResponse.self, from: data)
             print("✅ Payment created successfully:", result.message)
             self.errorMessage = nil
@@ -102,8 +101,7 @@ class PaymentService: ObservableObject {
             
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 self.payments = try decoder.decode([Payment].self, from: data)
                 self.errorMessage = nil
             default:
@@ -139,8 +137,7 @@ class PaymentService: ObservableObject {
             
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 self.selectedPayment = try decoder.decode(Payment.self, from: data)
                 self.errorMessage = nil
             default:
@@ -262,8 +259,7 @@ class PaymentService: ObservableObject {
             
             switch httpResponse.statusCode {
             case 200:
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
+                let decoder = JSONDecoder.tickezyDecoder
                 self.payments = try decoder.decode([Payment].self, from: data)
                 self.errorMessage = nil
             default:

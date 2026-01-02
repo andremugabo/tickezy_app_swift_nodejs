@@ -16,7 +16,8 @@ const Payment = sequelize.define('Payment', {
     defaultValue: 'PENDING',
   },
   paymentMethod: {
-    type: DataTypes.ENUM('STRIPE', 'APPLE_PAY'),
+    type: DataTypes.ENUM('STRIPE', 'APPLE_PAY', 'CREDIT_CARD', 'MOBILE_MONEY', 'PAYPAL', 'CASH'),
+    defaultValue: 'CREDIT_CARD',
   },
   paymentDate: DataTypes.DATE,
   transactionId: DataTypes.STRING,

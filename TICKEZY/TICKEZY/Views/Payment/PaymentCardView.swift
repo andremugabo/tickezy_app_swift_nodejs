@@ -54,7 +54,7 @@ struct PaymentCardView: View {
 
             // Amount
             VStack(alignment: .trailing) {
-                Text("$\(payment.amount, specifier: "%.2f")")
+                Text("\(Int(payment.amount)) Frw")
                     .font(.headline)
                     .foregroundColor(.textPrimary)
 

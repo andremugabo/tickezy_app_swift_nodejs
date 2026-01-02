@@ -230,7 +230,7 @@ struct ForgotPasswordView: View {
                     .stroke(
                         isEmailFocused ? 
                         LinearGradient(colors: [Color.brandPrimary, Color.brandAccent], startPoint: .leading, endPoint: .trailing) :
-                        LinearGradient(colors: [Color.border, Color.border], startPoint: .leading, endPoint: .trailing),
+                        LinearGradient(colors: [Color.brandBorder, Color.brandBorder], startPoint: .leading, endPoint: .trailing),
                         lineWidth: isEmailFocused ? 2 : 1
                     )
             )

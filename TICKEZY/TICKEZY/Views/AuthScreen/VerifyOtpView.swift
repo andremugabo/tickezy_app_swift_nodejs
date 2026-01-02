@@ -113,7 +113,7 @@ struct VerifyOtpView: View {
 
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    idx < otp.count ? Color.brandPrimary : Color.border,
+                                    idx < otp.count ? Color.brandPrimary : Color.brandBorder,
                                     lineWidth: idx < otp.count ? 2 : 1
                                 )
 
@@ -184,7 +184,7 @@ struct VerifyOtpView: View {
                 .background(Color.surface)
                 .foregroundColor(canResend ? .brandPrimary : .textTertiary)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(canResend ? Color.brandPrimary : Color.border, lineWidth: canResend ? 2 : 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(canResend ? Color.brandPrimary : Color.brandBorder, lineWidth: canResend ? 2 : 1))
             }
             .disabled(!canResend)
         }

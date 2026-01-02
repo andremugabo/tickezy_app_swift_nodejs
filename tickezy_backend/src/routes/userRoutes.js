@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const userController = require('../controller/userController'); 
+const userController = require('../controller/userController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 // -------------------------------------------
@@ -18,6 +18,7 @@ router.post('/password/reset', userController.resetPassword);
 // -------------------------------------------
 router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, userController.updateProfile);
+router.put('/profile/password', authenticate, userController.changePassword);
 router.put('/device-token', authenticate, userController.updateFcmToken);
 
 // -------------------------------------------

@@ -297,6 +297,18 @@ struct DashboardView: View {
                     )
                 }
                 .accessibilityLabel("Reports")
+                
+                NavigationLink {
+                    AdminTicketsView()
+                } label: {
+                    ActionCard(
+                        title: "Manage Tickets",
+                        subtitle: "View and manage all tickets",
+                        icon: "ticket.fill",
+                        color: .brandPrimary
+                    )
+                }
+                .accessibilityLabel("Manage Tickets")
             }
             .padding(.horizontal)
         }
@@ -538,7 +550,7 @@ struct DashboardView: View {
         default:
             formatted = String(format: "%.0f", absValue)
         }
-        return "$" + sign + formatted
+        return sign + formatted + " Frw"
     }
 }
 
@@ -614,7 +626,7 @@ struct ReportsView: View {
                                         .cornerRadius(12)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.border, lineWidth: 1)
+                                                .stroke(Color.brandBorder, lineWidth: 1)
                                         )
                                         .padding(.horizontal)
                                     }
@@ -645,7 +657,7 @@ struct ReportsView: View {
         default:
             formatted = String(format: "%.0f", absValue)
         }
-        return "$" + sign + formatted
+        return sign + formatted + " Frw"
     }
     private func topEventsByRevenue() -> [Event] {
         eventService.events.sorted { (Double($0.ticketsSold) * $0.price) > (Double($1.ticketsSold) * $1.price) }
@@ -716,7 +728,7 @@ struct ActionCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
         .opacity(isComingSoon ? 0.6 : 1.0)
     }
@@ -768,7 +780,7 @@ struct CompactUserCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
 }
@@ -797,7 +809,7 @@ struct RecentTicketRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                             .font(.caption2)
-                        Text(ticket.purchaseDate.formatted(date: .abbreviated, time: .omitted))
+                        Text(ticket.purchaseDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
                             .font(.caption)
                     }
                     .foregroundColor(.textSecondary)
@@ -817,7 +829,7 @@ struct RecentTicketRow: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.border, lineWidth: 1)
+                .stroke(Color.brandBorder, lineWidth: 1)
         )
     }
     
